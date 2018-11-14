@@ -10,6 +10,11 @@
 #include <linux/if_tun.h>
 #include "tap.h"
 
+TAPDev *TAPDev::instance() {
+    static TAPDev ins("tap0");
+    return &ins;
+}
+
 TAPDev::TAPDev(std::string &&dev):
         addr("10.0.0.5"),
         route("10.0.0.0/24") {
@@ -82,6 +87,8 @@ void TAPDev::set_iff_route(std::string &dev) {
     ss << "ip route add dev " <<  dev << " " << route;
     system(ss.str().c_str());
 }
+
+
 
 
 

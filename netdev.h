@@ -4,6 +4,10 @@
 #include <cstdint>
 #include <memory>
 #include "arp.h"
+#include "ip.h"
+
+
+extern TAPDev *tapd;
 
 class NetDev {
 public:
@@ -14,8 +18,8 @@ public:
 private:
     uint32_t addr;
     uint8_t hwaddr[6];
-    std::shared_ptr<TAPDev> tapd;
-    std::shared_ptr<ARP> arp;
+    ARP arp;
+    IP ip;
     int epoll_fd;
 
 };

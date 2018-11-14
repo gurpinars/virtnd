@@ -4,17 +4,17 @@
 #include <linux/if_ether.h>
 #include <arpa/inet.h>
 #include "netdev.h"
+#include "utils.h"
 
 static constexpr int MAX_EVENTS = 32;
 static constexpr uint32_t MTU = 1500;
 
-inline uint32_t inet_bf(const char *addr);
+
+TAPDev *tapd = TAPDev::instance();
 
 NetDev::NetDev(const char *addr, const char *hwaddr) :
-        addr(inet_bf(addr)),
-        tapd(std::make_shared<TAPDev>("tap0")),
-        arp(std::make_shared<ARP>(tapd)) {
-
+        addr(inet_bf(addr)){
+    printf("The %s device is up at %s\n",hwaddr, addr);
     std::sscanf(hwaddr, "%hhx:%hhx:%hhx:%hhx:%hhx:%hhx",
                 &this->hwaddr[0],
                 &this->hwaddr[1],
@@ -70,7 +70,10 @@ void NetDev::loop() {
 
                 switch (eth->type) {
                     case ETH_P_ARP:
-                        arp->recv(eth, addr, hwaddr);
+                        arp.recv(eth, addr, hwaddr);
+                        continue;
+                    case ETH_P_IP:
+                        ip.recv(eth);
                         continue;
                     default:
                         continue;
@@ -80,19 +83,6 @@ void NetDev::loop() {
 
     }
 }
-
-
-inline uint32_t inet_bf(const char *addr) {
-    uint32_t dst = 0;
-
-    if (inet_pton(AF_INET, addr, &dst) != 1) {
-        perror("inet binary formatting failed");
-        exit(1);
-    }
-
-    return ntohl(dst);
-}
-
 
 
 
