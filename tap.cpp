@@ -24,6 +24,7 @@ TAPDev::TAPDev(std::string &&dev):
         exit(1);
     }
 
+    printf("The interface %s created\n", dev.c_str());
     set_iff_up(dev);
     set_iff_address(dev);
     set_iff_route(dev);
@@ -73,22 +74,25 @@ ssize_t TAPDev::write(void *buf, size_t len) {
 void TAPDev::set_iff_up(std::string &dev) {
     std::stringstream  ss;
     ss << "ip link set dev " << dev << " up";
+    std::cout << ss.str() << std::endl;
     system(ss.str().c_str());
 }
 
 void TAPDev::set_iff_address(std::string &dev) {
     std::stringstream  ss;
     ss << "ip address add dev " << dev << " local " << addr;
+    std::cout << ss.str() << std::endl;
     system(ss.str().c_str());
 }
 
 void TAPDev::set_iff_route(std::string &dev) {
     std::stringstream  ss;
     ss << "ip route add dev " <<  dev << " " << route;
+    std::cout << ss.str() << std::endl;
     system(ss.str().c_str());
 }
 
-
+TAPDev *tapd = TAPDev::instance();
 
 
 

@@ -29,4 +29,5 @@ private:
     void set_iff_route(std::string &);
 };
 
+extern TAPDev *tapd;
 #endif //VIRTND_TAP_H
