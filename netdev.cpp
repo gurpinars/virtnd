@@ -5,16 +5,21 @@
 #include <arpa/inet.h>
 #include "netdev.h"
 #include "utils.h"
+#include "tap.h"
+#include "ethernet.h"
+#include "arp.h"
+#include "ip.h"
+#include "pk_buff.h"
 
 static constexpr int MAX_EVENTS = 32;
 static constexpr uint32_t MTU = 1500;
 
 
-TAPDev *tapd = TAPDev::instance();
-
 NetDev::NetDev(const char *addr, const char *hwaddr) :
-        addr(inet_bf(addr)){
-    printf("The %s device is up at %s\n",hwaddr, addr);
+        addr(inet_bf(addr)) {
+
+    printf("The device(%s) is up at %s\n", hwaddr, addr);
+
     std::sscanf(hwaddr, "%hhx:%hhx:%hhx:%hhx:%hhx:%hhx",
                 &this->hwaddr[0],
                 &this->hwaddr[1],
@@ -22,6 +27,8 @@ NetDev::NetDev(const char *addr, const char *hwaddr) :
                 &this->hwaddr[3],
                 &this->hwaddr[4],
                 &this->hwaddr[5]);
+
+    pkb = new pk_buff;
 
     epoll_fd = epoll_create1(0);
     if (epoll_fd < 0) {
@@ -32,7 +39,7 @@ NetDev::NetDev(const char *addr, const char *hwaddr) :
     struct epoll_event event{};
     memset(&event, 0, sizeof(event));
     event.data.fd = tapd->fd();
-    event.events = EPOLLIN | EPOLLET;
+    event.events = EPOLLIN;
 
     if (epoll_ctl(epoll_fd, EPOLL_CTL_ADD, tapd->fd(), &event) < 0) {
         perror("epoll_ctl()");
@@ -57,31 +64,44 @@ void NetDev::loop() {
                 close(events[i].data.fd);
             } else if (events[i].data.fd == tapd->fd()) {
 
-                char buffer[MTU];
-                ssize_t nread = tapd->read(buffer, sizeof(buffer));
+
+                pkb->data = new uint8_t[MTU];
+
+                ssize_t nread = tapd->read(pkb->data, MTU);
 
                 if (nread < 0) {
                     perror("Reading from interface");
                     exit(1);
                 }
 
-                auto *eth = eth_hdr(buffer);
+                pkb->len = nread;
+
+                auto *eth = eth_hdr(pkb->data);
                 eth->type = htons(eth->type);
+
 
                 switch (eth->type) {
                     case ETH_P_ARP:
-                        arp.recv(eth, addr, hwaddr);
-                        continue;
+                        arp->recv(pkb, addr, hwaddr);
                     case ETH_P_IP:
-                        ip.recv(eth);
-                        continue;
-                    default:
-                        continue;
+                        ip->recv(pkb, hwaddr);
+                    default:;
                 }
+
+                delete pkb->data;
+                continue;
             }
         }
 
     }
+}
+
+NetDev::~NetDev() {
+    close(epoll_fd);
+    delete pkb->data;
+    delete pkb;
+
+
 }
 
 

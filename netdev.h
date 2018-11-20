@@ -2,25 +2,21 @@
 #define VIRTND_NETDEV_H
 
 #include <cstdint>
-#include <memory>
-#include "arp.h"
-#include "ip.h"
+#include <unistd.h>
+#include "pk_buff.h"
 
-
-extern TAPDev *tapd;
 
 class NetDev {
 public:
     NetDev(const char *, const char *);
-    ~NetDev() { close(epoll_fd); }
+    ~NetDev();
     void loop();
 
 private:
     uint32_t addr;
     uint8_t hwaddr[6];
-    ARP arp;
-    IP ip;
     int epoll_fd;
+    pk_buff *pkb;
 
 };
 
