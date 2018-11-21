@@ -7,8 +7,9 @@
 #include "ethernet.h"
 #include "pk_buff.h"
 
+
 struct arp_cache {
-    uint8_t sha[6];     /* Sender Hardware Address */
+    uint8_t hwaddr[6];  /* Sender Hardware Address */
     uint16_t pro;       /* Protocol type */
     time_t time;
 };

@@ -3,10 +3,16 @@ project(virtnd)
 
 set(CMAKE_CXX_STANDARD 14)
 
-file(GLOB SOURCE_FILES
-        "*.h"
-        "*.cpp")
+
+set(SOURCE_FILES virtnd.cpp
+        netdev.cpp netdev.h
+        arp.cpp arp.h
+        icmp.cpp icmp.h
+        ip.cpp ip.h
+        route.cpp route.h
+        tap.cpp tap.h
+        utils.cpp utils.h)
 
 
 add_executable(virtnd ${SOURCE_FILES})
-target_link_libraries( virtnd pthread)
+target_link_libraries(virtnd pthread)

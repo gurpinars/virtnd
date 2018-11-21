@@ -2,21 +2,19 @@
 #include <cstring>
 #include <netinet/in.h>
 #include <linux/if_ether.h>
-#include <arpa/inet.h>
 #include "netdev.h"
 #include "utils.h"
 #include "tap.h"
 #include "ethernet.h"
 #include "arp.h"
 #include "ip.h"
-#include "pk_buff.h"
 
 static constexpr int MAX_EVENTS = 32;
-static constexpr uint32_t MTU = 1500;
 
 
 NetDev::NetDev(const char *addr, const char *hwaddr) :
-        addr(inet_bf(addr)) {
+        addr(inet_bf(addr)),
+        MTU(1500) {
 
     printf("The device(%s) is up at %s\n", hwaddr, addr);
 
@@ -79,17 +77,18 @@ void NetDev::loop() {
                 auto *eth = eth_hdr(pkb->data);
                 eth->type = htons(eth->type);
 
-
                 switch (eth->type) {
                     case ETH_P_ARP:
                         arp->recv(pkb, addr, hwaddr);
+                        break;
                     case ETH_P_IP:
                         ip->recv(pkb, hwaddr);
-                    default:;
+                        break;
+                    default:
+                        break;
                 }
 
                 delete pkb->data;
-                continue;
             }
         }
 

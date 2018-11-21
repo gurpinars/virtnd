@@ -25,7 +25,7 @@ ARP *ARP::instance() {
 
 ARP::ARP() {
     ct.stop = false;
-    ct.timeout = 5;
+    ct.timeout = 600;
 
     if (pthread_mutex_init(&ct.mutex, nullptr) != 0) {
         throw std::runtime_error("Mutex initialization failed");
@@ -80,10 +80,8 @@ void ARP::recv(pk_buff *pkb, uint32_t addr, uint8_t hwaddr[]) {
         merge = true;
     }
 
-    if (addr == arph->tpa) {
-        if (!merge) {
-            cache_ent_create(arph->spa, arph->pro, arph->sha);
-        }
+    if (addr == arph->tpa && !merge) {
+        cache_ent_create(arph->spa, arph->pro, arph->sha);
     } else
         return;
 
@@ -91,9 +89,9 @@ void ARP::recv(pk_buff *pkb, uint32_t addr, uint8_t hwaddr[]) {
         case ARP_REQUEST:
             std::cout << "Got 1 ARP Request\n";
             reply(pkb, addr, hwaddr);
-            return;
+            break;
         default:
-            return;
+            break;
     }
 
 }
@@ -173,9 +171,9 @@ void *ARP::chck_table(void *contex) {
 //                if (!ctx->trans_table.empty())
 //
 //                    printf("%s Cache cleaned:Key: %s \tMac:%hhx:%hhx:%hhx:%hhx:%hhx:%hhx\n\n",ctime(&now),inet_pf(el.first).c_str(),
-//                       ctx->trans_table[el.first].sha[0],ctx->trans_table[el.first].sha[1],
-//                       ctx->trans_table[el.first].sha[2],ctx->trans_table[el.first].sha[3],
-//                       ctx->trans_table[el.first].sha[4],ctx->trans_table[el.first].sha[5]);
+//                       ctx->trans_table[el.first].hwaddr[0],ctx->trans_table[el.first].hwaddr[1],
+//                       ctx->trans_table[el.first].hwaddr[2],ctx->trans_table[el.first].hwaddr[3],
+//                       ctx->trans_table[el.first].hwaddr[4],ctx->trans_table[el.first].hwaddr[5]);
             }
         }
         pthread_mutex_unlock(&ctx->ct.mutex);
@@ -191,8 +189,8 @@ arp_cache ARP::cache_lookup(uint32_t addr) {
     auto f = trans_table.find(addr);
     if (f != trans_table.end()) {
 //        printf("********* Cache found %s %hhx:%hhx:%hhx:%hhx:%hhx:%hhx\n\n",inet_pf(addr).c_str(),
-//               f->second.sha[0],f->second.sha[1],f->second.sha[2],f->second.sha[3],
-//               f->second.sha[4],f->second.sha[5]);
+//               f->second.hwaddr[0],f->second.hwaddr[1],f->second.hwaddr[2],f->second.hwaddr[3],
+//               f->second.hwaddr[4],f->second.hwaddr[5]);
         c = f->second;
     }
     pthread_mutex_unlock(&ct.mutex);
@@ -202,12 +200,12 @@ arp_cache ARP::cache_lookup(uint32_t addr) {
 
 void ARP::cache_update(uint32_t addr, uint8_t *sha) {
     pthread_mutex_lock(&ct.mutex);
-    memcpy(trans_table[addr].sha, sha, 6);
+    memcpy(trans_table[addr].hwaddr, sha, 6);
     trans_table[addr].time = time(nullptr);
 
 //    printf("%s Cache updated:Key: %s \tMac:%hhx:%hhx:%hhx:%hhx:%hhx:%hhx\n\n",ctime(&now),inet_pf(addr).c_str(),
-//           trans_table[addr].sha[0],trans_table[addr].sha[1],trans_table[addr].sha[2],trans_table[addr].sha[3],
-//           trans_table[addr].sha[4],trans_table[addr].sha[5]);
+//           trans_table[addr].hwaddr[0],trans_table[addr].hwaddr[1],trans_table[addr].hwaddr[2],trans_table[addr].hwaddr[3],
+//           trans_table[addr].hwaddr[4],trans_table[addr].hwaddr[5]);
 
     pthread_mutex_unlock(&ct.mutex);
 
@@ -218,12 +216,12 @@ void ARP::cache_ent_create(uint32_t addr, uint16_t pro, uint8_t *sha) {
     arp_cache c{};
     c.pro = pro;
     c.time = time(nullptr);
-    memcpy(c.sha, sha, 6);
+    memcpy(c.hwaddr, sha, 6);
     trans_table.insert(std::make_pair(addr, c));
 
 //    printf("%s Cache ent created:%d \t%hhx:%hhx:%hhx:%hhx:%hhx:%hhx\n\n",ctime(&c.time),addr,
-//           trans_table[addr].sha[0],trans_table[addr].sha[1],trans_table[addr].sha[2],trans_table[addr].sha[3],
-//           trans_table[addr].sha[4],trans_table[addr].sha[5]);
+//           trans_table[addr].hwaddr[0],trans_table[addr].hwaddr[1],trans_table[addr].hwaddr[2],trans_table[addr].hwaddr[3],
+//           trans_table[addr].hwaddr[4],trans_table[addr].hwaddr[5]);
 
     pthread_mutex_unlock(&ct.mutex);
 
