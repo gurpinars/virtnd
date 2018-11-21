@@ -8,6 +8,7 @@
 #include "route.h"
 #include "arp.h"
 #include "tap.h"
+#include "pk_buff.h"
 
 /*
  * rfc 792
@@ -69,13 +70,6 @@ void ICMP::reply(pk_buff *pkb, uint8_t hwaddr[]) {
     struct icmp *icmph;
     icmph = reinterpret_cast<icmp *>(iph->data);
 
-    struct rtentry rt{};
-    rt = route->lookup(ntohl(iph->daddr));
-    if (!rt.gateway) {
-        // dest unreach
-        std::cerr << "route lookup fail\n";
-        return;
-    }
 
     int icmp_len = iph->len - (iph->ihl * 4);
     icmph->type = ECHO_REPLY;
@@ -98,8 +92,8 @@ void ICMP::reply(pk_buff *pkb, uint8_t hwaddr[]) {
     iph->saddr ^= iph->daddr;
 
 
-    if (rt.flags & RT_GATEWAY)
-        iph->daddr = rt.gateway;
+    if (pkb->rtdst.flags & RT_GATEWAY)
+        iph->daddr = pkb->rtdst.gateway;
 
     auto c = arp->cache_lookup(iph->daddr);
 

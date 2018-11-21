@@ -3,6 +3,8 @@
 #include "utils.h"
 #include "ip.h"
 #include "icmp.h"
+#include "route.h"
+#include "pk_buff.h"
 
 /*
  * rfc 791
@@ -53,12 +55,20 @@ void IP::recv(pk_buff *pkb, uint8_t hwaddr[]) {
         return;
     }
 
-    // Check IP Fragment
-
     iph->saddr = ntohl(iph->saddr);
     iph->daddr = ntohl(iph->daddr);
     iph->len = ntohs(iph->len);
     iph->id = ntohs(iph->id);
+
+    struct rtentry rt{};
+    rt = route->lookup(ntohl(iph->daddr));
+    if (!rt.gateway) {
+        // dest unreach
+        std::cerr << "route lookup fail\n";
+        return;
+    }
+
+    pkb->rtdst = rt;
 
     switch (iph->pro) {
         case ICMPv4:
