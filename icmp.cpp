@@ -5,10 +5,8 @@
 #include "ip.h"
 #include "icmp.h"
 #include "utils.h"
-#include "route.h"
 #include "arp.h"
 #include "tap.h"
-#include "pk_buff.h"
 
 /*
  * rfc 792
@@ -43,7 +41,7 @@ void ICMP::recv(pk_buff *pkb, uint8_t hwaddr[]) {
 
     int icmp_len = iph->len - (iph->ihl * 4);
 
-    auto cksum = checksum(icmph, icmp_len, 0);
+    auto cksum = checksum(icmph, icmp_len);
     if (cksum != 0) {
         std::cerr << "ICMP Invalid Checksum\n";
         return;
@@ -75,34 +73,35 @@ void ICMP::reply(pk_buff *pkb, uint8_t hwaddr[]) {
     icmph->type = ECHO_REPLY;
     icmph->code = 0x00;
     icmph->cksum = 0;
-    icmph->cksum = checksum(icmph, icmp_len, 0);
+    icmph->cksum = checksum(icmph, icmp_len);
 
     iph->version = IPv4;
     iph->ihl = 0x05;
     iph->tos = 0;
-    iph->id = iph->id;
     iph->fragoff = 0x4000;
     iph->ttl = 64;
     iph->pro = ICMPv4;
-    iph->len = iph->len;
+    iph->cksum = 0;
 
-    // swap saddr<->daddr
+    // swap saddr,daddr
     iph->saddr ^= iph->daddr;
     iph->daddr ^= iph->saddr;
     iph->saddr ^= iph->daddr;
 
-
     if (pkb->rtdst.flags & RT_GATEWAY)
         iph->daddr = pkb->rtdst.gateway;
 
-    auto c = arp->cache_lookup(iph->daddr);
 
+    auto c = arp->cache_lookup(iph->daddr);
     if (c.pro) {
         iph->len = htons(iph->len);
         iph->id = htons(iph->id);
         iph->daddr = htonl(iph->daddr);
         iph->saddr = htonl(iph->saddr);
+        iph->cksum = htons(iph->cksum);
         iph->fragoff = htons(iph->fragoff);
+
+        iph->cksum = checksum(iph, 4 * iph->ihl);
 
         eth->type = htons(ETH_P_IP);
         memcpy(eth->dmac, c.hwaddr, 6);
