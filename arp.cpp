@@ -45,11 +45,10 @@ ARP::~ARP() {
 }
 
 void ARP::recv(pk_buff *pkb, uint32_t addr, uint8_t hwaddr[]) {
-    struct arp_hdr *arph;
     struct eth_frame *eth;
-
     eth = eth_hdr(pkb->data);
 
+    struct arp_hdr *arph;
     arph = emit_hdr(eth);
 
     if (pkb->len < sizeof(eth_frame) + sizeof(arp_hdr)) {

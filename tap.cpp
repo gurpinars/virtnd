@@ -1,4 +1,3 @@
-
 #include <cstring>
 #include <fcntl.h>
 #include <cstdio>
@@ -6,7 +5,6 @@
 #include <sstream>
 #include <sys/ioctl.h>
 #include <net/if.h>
-
 #include <linux/if_tun.h>
 #include "tap.h"
 
@@ -15,7 +13,7 @@ TAPDev *TAPDev::instance() {
     return &ins;
 }
 
-TAPDev::TAPDev(std::string &&dev):
+TAPDev::TAPDev(std::string &&dev) :
         addr("10.0.0.5"),
         route("10.0.0.0/24") {
 
@@ -72,22 +70,22 @@ ssize_t TAPDev::write(void *buf, size_t len) {
 
 
 void TAPDev::set_iff_up(std::string &dev) {
-    std::stringstream  ss;
+    std::stringstream ss;
     ss << "ip link set dev " << dev << " up";
     std::cout << ss.str() << std::endl;
     system(ss.str().c_str());
 }
 
 void TAPDev::set_iff_address(std::string &dev) {
-    std::stringstream  ss;
+    std::stringstream ss;
     ss << "ip address add dev " << dev << " local " << addr;
     std::cout << ss.str() << std::endl;
     system(ss.str().c_str());
 }
 
 void TAPDev::set_iff_route(std::string &dev) {
-    std::stringstream  ss;
-    ss << "ip route add dev " <<  dev << " " << route;
+    std::stringstream ss;
+    ss << "ip route add dev " << dev << " " << route;
     std::cout << ss.str() << std::endl;
     system(ss.str().c_str());
 }

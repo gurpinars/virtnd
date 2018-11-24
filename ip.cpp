@@ -3,8 +3,6 @@
 #include "utils.h"
 #include "ip.h"
 #include "icmp.h"
-#include "route.h"
-#include "pk_buff.h"
 
 /*
  * rfc 791
@@ -29,7 +27,7 @@ void IP::recv(pk_buff *pkb, uint8_t hwaddr[]) {
         return;
     }
 
-    if(pkb->len < sizeof(eth_frame)+ sizeof(iphdr)) {
+    if (pkb->len < sizeof(eth_frame) + sizeof(iphdr)) {
         std::cerr << "IPv4 packet is too small";
         return;
     }
@@ -49,7 +47,7 @@ void IP::recv(pk_buff *pkb, uint8_t hwaddr[]) {
         return;
     }
 
-    auto cksum = checksum(iph, iph->ihl * 4, 0);
+    auto cksum = checksum(iph, iph->ihl * 4);
     if (cksum != 0) {
         std::cerr << "IP Invalid Checksum\n";
         return;
