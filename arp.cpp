@@ -76,8 +76,9 @@ void ARP::recv(pk_buff *pkb, uint32_t addr, uint8_t hwaddr[]) {
         merge = true;
     }
 
-    if (addr == arph->tpa && !merge) {
-        cache_ent_create(arph->spa, arph->pro, arph->sha);
+    if (addr == arph->tpa) {
+        if (!merge)
+            cache_ent_create(arph->spa, arph->pro, arph->sha);
     } else
         return;
 
