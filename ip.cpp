@@ -16,11 +16,9 @@ IP *IP::instance() {
 }
 
 void IP::recv(pk_buff *pkb, uint8_t hwaddr[]) {
-    struct iphdr *iph;
-    struct eth_frame *eth;
 
-    eth = eth_hdr(pkb->data);
-    iph = emit_hdr(eth);
+    auto eth = eth_hdr(pkb->data);
+    auto iph = emit_hdr(eth);
 
     if (iph->version != IPv4) {
         std::cerr << "Version is not IPv4\n";
@@ -58,8 +56,7 @@ void IP::recv(pk_buff *pkb, uint8_t hwaddr[]) {
     iph->len = ntohs(iph->len);
     iph->id = ntohs(iph->id);
 
-    struct rtentry rt{};
-    rt = route->lookup(ntohl(iph->daddr));
+    auto rt = route->lookup(ntohl(iph->daddr));
     if (!rt.gateway) {
         // dest unreach
         std::cerr << "route lookup fail\n";

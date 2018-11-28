@@ -45,11 +45,8 @@ ARP::~ARP() {
 }
 
 void ARP::recv(pk_buff *pkb, uint32_t addr, uint8_t hwaddr[]) {
-    struct eth_frame *eth;
-    eth = eth_hdr(pkb->data);
-
-    struct arp_hdr *arph;
-    arph = emit_hdr(eth);
+    auto eth = eth_hdr(pkb->data);
+    auto arph = emit_hdr(eth);
 
     if (pkb->len < sizeof(eth_frame) + sizeof(arp_hdr)) {
         std::cerr << "ARP packet is too small\n";
@@ -96,12 +93,8 @@ void ARP::recv(pk_buff *pkb, uint32_t addr, uint8_t hwaddr[]) {
 }
 
 void ARP::reply(pk_buff *pkb, uint32_t addr, uint8_t hwaddr[]) {
-    struct arp_hdr *arph;
-    struct eth_frame *eth;
-
-    eth = eth_hdr(pkb->data);
-
-    arph = emit_hdr(eth);
+    auto eth = eth_hdr(pkb->data);
+    auto arph = emit_hdr(eth);
 
     memcpy(arph->tha, arph->sha, 6);
     arph->tpa = arph->spa;
@@ -125,26 +118,23 @@ void ARP::reply(pk_buff *pkb, uint32_t addr, uint8_t hwaddr[]) {
 }
 
 void ARP::request(pk_buff *pkb, uint32_t addr, uint8_t hwaddr[], uint32_t tpa) {
-    struct arp_hdr *arp;
-    struct eth_frame *eth;
+    auto eth = eth_hdr(pkb->data);
+    auto arph = emit_hdr(eth);
 
-    eth = eth_hdr(pkb->data);
-    arp = emit_hdr(eth);
+    memcpy(arph->sha, hwaddr, 6);
+    arph->spa = addr;
 
-    memcpy(arp->sha, hwaddr, 6);
-    arp->spa = addr;
+    memcpy(arph->tha, hwbroadcast, 6);
+    arph->tpa = tpa;
 
-    memcpy(arp->tha, hwbroadcast, 6);
-    arp->tpa = tpa;
+    arph->op = htons(ARP_REQUEST);
+    arph->hrd = htons(ARP_ETHERNET);
+    arph->pro = htons(ARP_IPV4);
+    arph->hln = 0x06;
+    arph->pln = 0x04;
 
-    arp->op = htons(ARP_REQUEST);
-    arp->hrd = htons(ARP_ETHERNET);
-    arp->pro = htons(ARP_IPV4);
-    arp->hln = 0x06;
-    arp->pln = 0x04;
-
-    arp->spa = htonl(arp->spa);
-    arp->tpa = htonl(arp->tpa);
+    arph->spa = htonl(arph->spa);
+    arph->tpa = htonl(arph->tpa);
 
     memcpy(eth->dmac, hwbroadcast, 6);
     memcpy(eth->smac, hwaddr, 6);
@@ -166,13 +156,6 @@ void *ARP::chck_table(void *contex) {
         for (auto &el:ctx->trans_table) {
             if (difftime(now, el.second.time) > ctx->ct.timeout) {
                 ctx->trans_table.erase(el.first);
-                // debug
-//                if (!ctx->trans_table.empty())
-//
-//                    printf("%s Cache cleaned:Key: %s \tMac:%hhx:%hhx:%hhx:%hhx:%hhx:%hhx\n\n",ctime(&now),inet_pf(el.first).c_str(),
-//                       ctx->trans_table[el.first].hwaddr[0],ctx->trans_table[el.first].hwaddr[1],
-//                       ctx->trans_table[el.first].hwaddr[2],ctx->trans_table[el.first].hwaddr[3],
-//                       ctx->trans_table[el.first].hwaddr[4],ctx->trans_table[el.first].hwaddr[5]);
             }
         }
         pthread_mutex_unlock(&ctx->ct.mutex);
@@ -187,9 +170,6 @@ arp_cache ARP::cache_lookup(uint32_t addr) {
     pthread_mutex_lock(&ct.mutex);
     auto f = trans_table.find(addr);
     if (f != trans_table.end()) {
-//        printf("********* Cache found %s %hhx:%hhx:%hhx:%hhx:%hhx:%hhx\n\n",inet_pf(addr).c_str(),
-//               f->second.hwaddr[0],f->second.hwaddr[1],f->second.hwaddr[2],f->second.hwaddr[3],
-//               f->second.hwaddr[4],f->second.hwaddr[5]);
         c = f->second;
     }
     pthread_mutex_unlock(&ct.mutex);
@@ -202,10 +182,6 @@ void ARP::cache_update(uint32_t addr, uint8_t *sha) {
     memcpy(trans_table[addr].hwaddr, sha, 6);
     trans_table[addr].time = time(nullptr);
 
-//    printf("%s Cache updated:Key: %s \tMac:%hhx:%hhx:%hhx:%hhx:%hhx:%hhx\n\n",ctime(&now),inet_pf(addr).c_str(),
-//           trans_table[addr].hwaddr[0],trans_table[addr].hwaddr[1],trans_table[addr].hwaddr[2],trans_table[addr].hwaddr[3],
-//           trans_table[addr].hwaddr[4],trans_table[addr].hwaddr[5]);
-
     pthread_mutex_unlock(&ct.mutex);
 
 }
@@ -217,10 +193,6 @@ void ARP::cache_ent_create(uint32_t addr, uint16_t pro, uint8_t *sha) {
     c.time = time(nullptr);
     memcpy(c.hwaddr, sha, 6);
     trans_table.insert(std::make_pair(addr, c));
-
-//    printf("%s Cache ent created:%d \t%hhx:%hhx:%hhx:%hhx:%hhx:%hhx\n\n",ctime(&c.time),addr,
-//           trans_table[addr].hwaddr[0],trans_table[addr].hwaddr[1],trans_table[addr].hwaddr[2],trans_table[addr].hwaddr[3],
-//           trans_table[addr].hwaddr[4],trans_table[addr].hwaddr[5]);
 
     pthread_mutex_unlock(&ct.mutex);
 

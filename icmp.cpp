@@ -30,14 +30,9 @@ ICMP *ICMP::instance() {
 
 
 void ICMP::recv(pk_buff *pkb, uint8_t hwaddr[]) {
-    struct iphdr *iph;
-    struct eth_frame *eth;
-
-    eth = eth_hdr(pkb->data);
-    iph = reinterpret_cast<iphdr *>(eth->payload);
-
-    struct icmp *icmph;
-    icmph = reinterpret_cast<icmp *>(iph->data);
+    auto eth = eth_hdr(pkb->data);
+    auto iph = reinterpret_cast<iphdr *>(eth->payload);
+    auto icmph = reinterpret_cast<icmp *>(iph->data);
 
     int icmp_len = iph->len - (iph->ihl * 4);
 
@@ -59,15 +54,9 @@ void ICMP::recv(pk_buff *pkb, uint8_t hwaddr[]) {
 }
 
 void ICMP::reply(pk_buff *pkb, uint8_t hwaddr[]) {
-    struct eth_frame *eth;
-    eth = eth_hdr(pkb->data);
-
-    struct iphdr *iph;
-    iph = reinterpret_cast<iphdr *>(eth->payload);
-
-    struct icmp *icmph;
-    icmph = reinterpret_cast<icmp *>(iph->data);
-
+    auto eth = eth_hdr(pkb->data);
+    auto iph = reinterpret_cast<iphdr *>(eth->payload);
+    auto icmph = reinterpret_cast<icmp *>(iph->data);
 
     int icmp_len = iph->len - (iph->ihl * 4);
     icmph->type = ECHO_REPLY;
@@ -111,8 +100,7 @@ void ICMP::reply(pk_buff *pkb, uint8_t hwaddr[]) {
         tapd->write(pkb->data, pkb->len);
     } else
         arp->request(pkb, iph->saddr, hwaddr, iph->daddr);
-
-
 }
+
 
 ICMP *icmp = ICMP::instance();
