@@ -1,5 +1,5 @@
-#ifndef TCP_IP_ETHERNET_H
-#define TCP_IP_ETHERNET_H
+#ifndef VIRTND_ETHERNET_H
+#define VIRTND_ETHERNET_H
 
 #include <cstdint>
 
@@ -15,4 +15,4 @@ inline struct eth_frame *eth_hdr(void *buf) {
     return reinterpret_cast<eth_frame *>(buf);
 }
 
-#endif //TCP_IP_ETHERNET_H
+#endif //VIRTND_ETHERNET_H
