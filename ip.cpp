@@ -1,8 +1,11 @@
 #include <iostream>
 #include <netinet/in.h>
+#include <linux/if_ether.h>
 #include "utils.h"
 #include "ip.h"
 #include "icmp.h"
+#include "arp.h"
+#include "pk_buff.h"
 
 /*
  * rfc 791
@@ -15,10 +18,10 @@ IP *IP::instance() {
     return &ins;
 }
 
-void IP::recv(pk_buff *pkb, uint8_t hwaddr[]) {
+void IP::recv(pk_buff *pkb) {
 
     auto eth = eth_hdr(pkb->data);
-    auto iph = emit_hdr(eth);
+    auto iph = ip_hdr(eth);
 
     if (iph->version != IPv4) {
         std::cerr << "Version is not IPv4\n";
@@ -56,7 +59,22 @@ void IP::recv(pk_buff *pkb, uint8_t hwaddr[]) {
     iph->len = ntohs(iph->len);
     iph->id = ntohs(iph->id);
 
-    auto rt = route->lookup(ntohl(iph->daddr));
+    switch (iph->pro) {
+        case ICMPv4:
+            icmp->recv(pkb);
+            break;
+        case IP_TCP:
+            break;
+        default:
+            break;
+    }
+}
+
+void IP::send(pk_buff *pkb) {
+    auto eth = eth_hdr(pkb->data);
+    auto iph = ip_hdr(eth);
+
+    auto rt = route->lookup(ntohl(iph->saddr));
     if (!rt.gateway) {
         // dest unreach
         std::cerr << "route lookup fail\n";
@@ -65,15 +83,38 @@ void IP::recv(pk_buff *pkb, uint8_t hwaddr[]) {
 
     pkb->rtdst = rt;
 
-    switch (iph->pro) {
-        case ICMPv4:
-            icmp->recv(pkb, hwaddr);
-            break;
-        case IP_TCP:
-            break;
-        default:
-            break;
-    }
+    iph->version = IPv4;
+    iph->ihl = 0x05;
+    iph->tos = 0;
+    iph->fragoff = 0x4000;
+    iph->ttl = 64;
+    iph->pro = ICMPv4;
+    iph->cksum = 0;
+
+    // swap saddr,daddr
+    iph->saddr ^= iph->daddr;
+    iph->daddr ^= iph->saddr;
+    iph->saddr ^= iph->daddr;
+
+    if (rt.flags & RT_GATEWAY)
+        iph->daddr = rt.gateway;
+
+    auto c = arp->cache_lookup(iph->daddr);
+
+    if (c.filled) {
+        iph->len = htons(iph->len);
+        iph->id = htons(iph->id);
+        iph->daddr = htonl(iph->daddr);
+        iph->saddr = htonl(iph->saddr);
+        iph->cksum = htons(iph->cksum);
+        iph->fragoff = htons(iph->fragoff);
+
+        iph->cksum = checksum(iph, 4 * iph->ihl);
+        ethn->send(pkb, c.hwaddr, pkb->hwaddr, pkb->len, ETH_P_IP);
+
+    } else
+        arp->request(pkb, iph->saddr, iph->daddr);
+
 }
 
 IP *ip = IP::instance();

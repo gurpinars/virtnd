@@ -8,6 +8,7 @@
 #include "ethernet.h"
 #include "arp.h"
 #include "ip.h"
+#include "pk_buff.h"
 
 static constexpr int MAX_EVENTS = 32;
 
@@ -73,16 +74,17 @@ void NetDev::loop() {
                 }
 
                 pkb->len = nread;
+                memcpy(pkb->hwaddr, hwaddr, 6);
 
                 auto *eth = eth_hdr(pkb->data);
                 eth->type = htons(eth->type);
 
                 switch (eth->type) {
                     case ETH_P_ARP:
-                        arp->recv(pkb, addr, hwaddr);
+                        arp->recv(pkb, addr);
                         break;
                     case ETH_P_IP:
-                        ip->recv(pkb, hwaddr);
+                        ip->recv(pkb);
                         break;
                     default:
                         break;

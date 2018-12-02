@@ -24,22 +24,24 @@ struct iphdr {
     uint8_t data[];
 } __attribute__((packed));
 
+inline struct iphdr *ip_hdr(struct eth_frame *eth) {
+    return reinterpret_cast<iphdr *>(eth->payload);
+}
+
 class IP {
 public:
     static IP* instance();
     IP(const IP &) = delete;
     IP &operator=(const IP &)= delete;
-    void recv(pk_buff *, uint8_t[]);
+    void recv(pk_buff *);
+    void send(pk_buff *);
 
 private:
    IP(){};
 
-    inline struct iphdr *emit_hdr(struct eth_frame *eth) {
-        return reinterpret_cast<iphdr *>(eth->payload);
-    }
-
-
 };
+
+
 
 extern IP *ip;
 #endif //VIRTND_IP_H
