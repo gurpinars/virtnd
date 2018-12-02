@@ -1,12 +1,9 @@
 #include <iostream>
-#include <netinet/in.h>
-#include <linux/if_ether.h>
 #include <cstring>
 #include "ip.h"
 #include "icmp.h"
 #include "utils.h"
 #include "arp.h"
-#include "tap.h"
 
 /*
  * rfc 792
@@ -29,10 +26,10 @@ ICMP *ICMP::instance() {
 }
 
 
-void ICMP::recv(pk_buff *pkb, uint8_t hwaddr[]) {
+void ICMP::recv(pk_buff *pkb, uint8_t *hwaddr) {
     auto eth = eth_hdr(pkb->data);
     auto iph = ip_hdr(eth);
-    auto icmph =icmp_hdr(iph);
+    auto icmph = icmp_hdr(iph);
 
     int icmp_len = iph->len - (iph->ihl * 4);
 
@@ -53,10 +50,10 @@ void ICMP::recv(pk_buff *pkb, uint8_t hwaddr[]) {
 
 }
 
-void ICMP::reply(pk_buff *pkb, uint8_t hwaddr[]) {
+void ICMP::reply(pk_buff *pkb, uint8_t *hwaddr) {
     auto eth = eth_hdr(pkb->data);
     auto iph = ip_hdr(eth);
-    auto icmph =icmp_hdr(iph);
+    auto icmph = icmp_hdr(iph);
 
     int icmp_len = iph->len - (iph->ihl * 4);
     icmph->type = ECHO_REPLY;
@@ -64,42 +61,8 @@ void ICMP::reply(pk_buff *pkb, uint8_t hwaddr[]) {
     icmph->cksum = 0;
     icmph->cksum = checksum(icmph, icmp_len);
 
-    iph->version = IPv4;
-    iph->ihl = 0x05;
-    iph->tos = 0;
-    iph->fragoff = 0x4000;
-    iph->ttl = 64;
-    iph->pro = ICMPv4;
-    iph->cksum = 0;
-
-    // swap saddr,daddr
-    iph->saddr ^= iph->daddr;
-    iph->daddr ^= iph->saddr;
-    iph->saddr ^= iph->daddr;
-
-    if (pkb->rtdst.flags & RT_GATEWAY)
-        iph->daddr = pkb->rtdst.gateway;
-
-
-    auto c = arp->cache_lookup(iph->daddr);
-    if (c.pro) {
-        iph->len = htons(iph->len);
-        iph->id = htons(iph->id);
-        iph->daddr = htonl(iph->daddr);
-        iph->saddr = htonl(iph->saddr);
-        iph->cksum = htons(iph->cksum);
-        iph->fragoff = htons(iph->fragoff);
-
-        iph->cksum = checksum(iph, 4 * iph->ihl);
-
-        eth->type = htons(ETH_P_IP);
-        memcpy(eth->dmac, c.hwaddr, 6);
-        memcpy(eth->smac, hwaddr, 6);
-
-        std::cout << "Sent 1 ECHO reply\n";
-        tapd->write(pkb->data, pkb->len);
-    } else
-        arp->request(pkb, iph->saddr, hwaddr, iph->daddr);
+    std::cout << "Sent 1 ECHO Reply\n";
+    ip->send(pkb, hwaddr);
 }
 
 

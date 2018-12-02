@@ -12,6 +12,7 @@ struct arp_cache {
     uint8_t hwaddr[6];  /* Sender Hardware Address */
     uint16_t pro;       /* Protocol type */
     time_t time;
+    bool filled;
 };
 
 
@@ -22,13 +23,13 @@ public:
     ARP(const ARP &) = delete;
     ARP &operator=(const ARP &)= delete;
 
-    void recv(pk_buff *, uint32_t, uint8_t[]);
-    void request(pk_buff *, uint32_t, uint8_t[], uint32_t);
-    void reply(pk_buff *,uint32_t, uint8_t[]);
+    void recv(pk_buff *, uint32_t, uint8_t*);
+    void request(pk_buff *, uint32_t, uint8_t*, uint32_t);
+    void reply(pk_buff *,uint32_t, uint8_t*);
 
     arp_cache cache_lookup(uint32_t);
-    void cache_update(uint32_t,uint8_t[]);
-    void cache_ent_create(uint32_t,uint16_t,uint8_t[]);
+    void cache_update(uint32_t, uint8_t*);
+    void cache_ent_create(uint32_t, uint16_t, uint8_t*);
 
 
 private:

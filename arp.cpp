@@ -1,9 +1,9 @@
 #include <iostream>
 #include <cstring>
+#include <unistd.h>
 #include <netinet/in.h>
 #include <linux/if_ether.h>
 #include "arp.h"
-#include "tap.h"
 
 /*
  * rfc 826
@@ -44,7 +44,7 @@ ARP::~ARP() {
     pthread_mutex_destroy(&ct.mutex);
 }
 
-void ARP::recv(pk_buff *pkb, uint32_t addr, uint8_t hwaddr[]) {
+void ARP::recv(pk_buff *pkb, uint32_t addr, uint8_t *hwaddr) {
     auto eth = eth_hdr(pkb->data);
     auto arph = arp_hdr(eth);
 
@@ -93,7 +93,7 @@ void ARP::recv(pk_buff *pkb, uint32_t addr, uint8_t hwaddr[]) {
 
 }
 
-void ARP::reply(pk_buff *pkb, uint32_t addr, uint8_t hwaddr[]) {
+void ARP::reply(pk_buff *pkb, uint32_t addr, uint8_t *hwaddr) {
     auto eth = eth_hdr(pkb->data);
     auto arph = arp_hdr(eth);
 
@@ -105,20 +105,18 @@ void ARP::reply(pk_buff *pkb, uint32_t addr, uint8_t hwaddr[]) {
     memcpy(arph->sha, hwaddr, 6);
     arph->spa = htonl(addr);
 
-    memcpy(eth->dmac, arph->tha, 6);
-    memcpy(eth->smac, arph->sha, 6);
-
     arph->op = ARP_REPLY;
     arph->op = htons(arph->op);
 
     arph->hrd = htons(arph->hrd);
     arph->pro = htons(arph->pro);
 
-    tapd->write(pkb->data, pkb->len);
+    ethn->send(pkb, arph->tha, arph->sha, pkb->len, ETH_P_ARP);
+
 
 }
 
-void ARP::request(pk_buff *pkb, uint32_t addr, uint8_t hwaddr[], uint32_t tpa) {
+void ARP::request(pk_buff *pkb, uint32_t addr, uint8_t *hwaddr, uint32_t tpa) {
     auto eth = eth_hdr(pkb->data);
     auto arph = arp_hdr(eth);
 
@@ -137,12 +135,11 @@ void ARP::request(pk_buff *pkb, uint32_t addr, uint8_t hwaddr[], uint32_t tpa) {
     arph->spa = htonl(arph->spa);
     arph->tpa = htonl(arph->tpa);
 
-    memcpy(eth->dmac, hwbroadcast, 6);
-    memcpy(eth->smac, hwaddr, 6);
-    eth->type = htons(ETH_P_ARP);
 
     size_t len = sizeof(struct arphdr) + sizeof(struct eth_frame);
-    tapd->write(pkb->data, len);
+
+    ethn->send(pkb, arph->tha, arph->sha, len, ETH_P_ARP);
+
 }
 
 void *ARP::chck_table(void *contex) {
@@ -154,11 +151,13 @@ void *ARP::chck_table(void *contex) {
         now = time(nullptr);
 
         pthread_mutex_lock(&ctx->ct.mutex);
+
         for (auto &el:ctx->trans_table) {
             if (difftime(now, el.second.time) > ctx->ct.timeout) {
                 ctx->trans_table.erase(el.first);
             }
         }
+
         pthread_mutex_unlock(&ctx->ct.mutex);
 
     }
@@ -167,12 +166,14 @@ void *ARP::chck_table(void *contex) {
 
 arp_cache ARP::cache_lookup(uint32_t addr) {
     arp_cache c{};
-    memset(&c, 0, sizeof(c));
+    c.filled = false;
     pthread_mutex_lock(&ct.mutex);
+
     auto f = trans_table.find(addr);
     if (f != trans_table.end()) {
         c = f->second;
     }
+
     pthread_mutex_unlock(&ct.mutex);
     return c;
 
@@ -180,6 +181,7 @@ arp_cache ARP::cache_lookup(uint32_t addr) {
 
 void ARP::cache_update(uint32_t addr, uint8_t *sha) {
     pthread_mutex_lock(&ct.mutex);
+
     memcpy(trans_table[addr].hwaddr, sha, 6);
     trans_table[addr].time = time(nullptr);
 
@@ -191,6 +193,7 @@ void ARP::cache_ent_create(uint32_t addr, uint16_t pro, uint8_t *sha) {
     pthread_mutex_lock(&ct.mutex);
     arp_cache c{};
     c.pro = pro;
+    c.filled = true;
     c.time = time(nullptr);
     memcpy(c.hwaddr, sha, 6);
     trans_table.insert(std::make_pair(addr, c));

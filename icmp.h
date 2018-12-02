@@ -2,7 +2,6 @@
 #define VIRTND_ICMP_H
 
 #include <cstdint>
-#include "ethernet.h"
 #include "pk_buff.h"
 
 
@@ -11,8 +10,8 @@ public:
     static ICMP *instance();
     ICMP(const ICMP &) = delete;
     ICMP &operator=(const ICMP &)= delete;
-    void recv(pk_buff *, uint8_t[]);
-    void reply(pk_buff *, uint8_t[]);
+    void recv(pk_buff *, uint8_t*);
+    void reply(pk_buff *, uint8_t*);
 
 private:
     ICMP() {};
