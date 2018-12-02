@@ -33,8 +33,8 @@ public:
     static IP* instance();
     IP(const IP &) = delete;
     IP &operator=(const IP &)= delete;
-    void recv(pk_buff *, uint8_t*);
-    void send(pk_buff *, uint8_t*);
+    void recv(pk_buff *);
+    void send(pk_buff *);
 
 private:
    IP(){};

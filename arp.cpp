@@ -4,6 +4,7 @@
 #include <netinet/in.h>
 #include <linux/if_ether.h>
 #include "arp.h"
+#include "pk_buff.h"
 
 /*
  * rfc 826
@@ -44,7 +45,7 @@ ARP::~ARP() {
     pthread_mutex_destroy(&ct.mutex);
 }
 
-void ARP::recv(pk_buff *pkb, uint32_t addr, uint8_t *hwaddr) {
+void ARP::recv(pk_buff *pkb, uint32_t addr) {
     auto eth = eth_hdr(pkb->data);
     auto arph = arp_hdr(eth);
 
@@ -85,7 +86,7 @@ void ARP::recv(pk_buff *pkb, uint32_t addr, uint8_t *hwaddr) {
     switch (arph->op) {
         case ARP_REQUEST:
             std::cout << "Got 1 ARP Request\n";
-            reply(pkb, addr, hwaddr);
+            reply(pkb, addr);
             break;
         default:
             break;
@@ -93,7 +94,7 @@ void ARP::recv(pk_buff *pkb, uint32_t addr, uint8_t *hwaddr) {
 
 }
 
-void ARP::reply(pk_buff *pkb, uint32_t addr, uint8_t *hwaddr) {
+void ARP::reply(pk_buff *pkb, uint32_t addr) {
     auto eth = eth_hdr(pkb->data);
     auto arph = arp_hdr(eth);
 
@@ -102,7 +103,7 @@ void ARP::reply(pk_buff *pkb, uint32_t addr, uint8_t *hwaddr) {
 
     eth->type = htons(eth->type);
 
-    memcpy(arph->sha, hwaddr, 6);
+    memcpy(arph->sha, pkb->hwaddr, 6);
     arph->spa = htonl(addr);
 
     arph->op = ARP_REPLY;
@@ -116,11 +117,11 @@ void ARP::reply(pk_buff *pkb, uint32_t addr, uint8_t *hwaddr) {
 
 }
 
-void ARP::request(pk_buff *pkb, uint32_t addr, uint8_t *hwaddr, uint32_t tpa) {
+void ARP::request(pk_buff *pkb, uint32_t addr, uint32_t tpa) {
     auto eth = eth_hdr(pkb->data);
     auto arph = arp_hdr(eth);
 
-    memcpy(arph->sha, hwaddr, 6);
+    memcpy(arph->sha, pkb->hwaddr, 6);
     arph->spa = addr;
 
     memcpy(arph->tha, hwbroadcast, 6);

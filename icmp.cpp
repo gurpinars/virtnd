@@ -26,7 +26,7 @@ ICMP *ICMP::instance() {
 }
 
 
-void ICMP::recv(pk_buff *pkb, uint8_t *hwaddr) {
+void ICMP::recv(pk_buff *pkb) {
     auto eth = eth_hdr(pkb->data);
     auto iph = ip_hdr(eth);
     auto icmph = icmp_hdr(iph);
@@ -42,7 +42,7 @@ void ICMP::recv(pk_buff *pkb, uint8_t *hwaddr) {
     switch (icmph->type) {
         case ECHO_REQUEST:
             std::cout << "Got 1 ECHO request\n";
-            reply(pkb, hwaddr);
+            reply(pkb);
             break;
         default:
             break;
@@ -50,7 +50,7 @@ void ICMP::recv(pk_buff *pkb, uint8_t *hwaddr) {
 
 }
 
-void ICMP::reply(pk_buff *pkb, uint8_t *hwaddr) {
+void ICMP::reply(pk_buff *pkb) {
     auto eth = eth_hdr(pkb->data);
     auto iph = ip_hdr(eth);
     auto icmph = icmp_hdr(iph);
@@ -62,7 +62,7 @@ void ICMP::reply(pk_buff *pkb, uint8_t *hwaddr) {
     icmph->cksum = checksum(icmph, icmp_len);
 
     std::cout << "Sent 1 ECHO Reply\n";
-    ip->send(pkb, hwaddr);
+    ip->send(pkb);
 }
 
 

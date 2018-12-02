@@ -5,6 +5,7 @@
 #include "ip.h"
 #include "icmp.h"
 #include "arp.h"
+#include "pk_buff.h"
 
 /*
  * rfc 791
@@ -17,7 +18,7 @@ IP *IP::instance() {
     return &ins;
 }
 
-void IP::recv(pk_buff *pkb, uint8_t *hwaddr) {
+void IP::recv(pk_buff *pkb) {
 
     auto eth = eth_hdr(pkb->data);
     auto iph = ip_hdr(eth);
@@ -60,7 +61,7 @@ void IP::recv(pk_buff *pkb, uint8_t *hwaddr) {
 
     switch (iph->pro) {
         case ICMPv4:
-            icmp->recv(pkb, hwaddr);
+            icmp->recv(pkb);
             break;
         case IP_TCP:
             break;
@@ -69,7 +70,7 @@ void IP::recv(pk_buff *pkb, uint8_t *hwaddr) {
     }
 }
 
-void IP::send(pk_buff *pkb, uint8_t *hwaddr) {
+void IP::send(pk_buff *pkb) {
     auto eth = eth_hdr(pkb->data);
     auto iph = ip_hdr(eth);
 
@@ -95,8 +96,8 @@ void IP::send(pk_buff *pkb, uint8_t *hwaddr) {
     iph->daddr ^= iph->saddr;
     iph->saddr ^= iph->daddr;
 
-    if (pkb->rtdst.flags & RT_GATEWAY)
-        iph->daddr = pkb->rtdst.gateway;
+    if (rt.flags & RT_GATEWAY)
+        iph->daddr = rt.gateway;
 
     auto c = arp->cache_lookup(iph->daddr);
 
@@ -109,10 +110,10 @@ void IP::send(pk_buff *pkb, uint8_t *hwaddr) {
         iph->fragoff = htons(iph->fragoff);
 
         iph->cksum = checksum(iph, 4 * iph->ihl);
-        ethn->send(pkb, c.hwaddr, hwaddr, pkb->len, ETH_P_IP);
+        ethn->send(pkb, c.hwaddr, pkb->hwaddr, pkb->len, ETH_P_IP);
 
     } else
-        arp->request(pkb, iph->saddr, hwaddr, iph->daddr);
+        arp->request(pkb, iph->saddr, iph->daddr);
 
 }
 

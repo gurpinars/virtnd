@@ -23,9 +23,9 @@ public:
     ARP(const ARP &) = delete;
     ARP &operator=(const ARP &)= delete;
 
-    void recv(pk_buff *, uint32_t, uint8_t*);
-    void request(pk_buff *, uint32_t, uint8_t*, uint32_t);
-    void reply(pk_buff *,uint32_t, uint8_t*);
+    void recv(pk_buff *, uint32_t);
+    void request(pk_buff *, uint32_t, uint32_t);
+    void reply(pk_buff *,uint32_t);
 
     arp_cache cache_lookup(uint32_t);
     void cache_update(uint32_t, uint8_t*);
