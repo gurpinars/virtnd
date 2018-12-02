@@ -46,9 +46,9 @@ ARP::~ARP() {
 
 void ARP::recv(pk_buff *pkb, uint32_t addr, uint8_t hwaddr[]) {
     auto eth = eth_hdr(pkb->data);
-    auto arph = emit_hdr(eth);
+    auto arph = arp_hdr(eth);
 
-    if (pkb->len < sizeof(eth_frame) + sizeof(arp_hdr)) {
+    if (pkb->len < sizeof(eth_frame) + sizeof(arphdr)) {
         std::cerr << "ARP packet is too small\n";
         return;
     }
@@ -95,7 +95,7 @@ void ARP::recv(pk_buff *pkb, uint32_t addr, uint8_t hwaddr[]) {
 
 void ARP::reply(pk_buff *pkb, uint32_t addr, uint8_t hwaddr[]) {
     auto eth = eth_hdr(pkb->data);
-    auto arph = emit_hdr(eth);
+    auto arph = arp_hdr(eth);
 
     memcpy(arph->tha, arph->sha, 6);
     arph->tpa = arph->spa;
@@ -120,7 +120,7 @@ void ARP::reply(pk_buff *pkb, uint32_t addr, uint8_t hwaddr[]) {
 
 void ARP::request(pk_buff *pkb, uint32_t addr, uint8_t hwaddr[], uint32_t tpa) {
     auto eth = eth_hdr(pkb->data);
-    auto arph = emit_hdr(eth);
+    auto arph = arp_hdr(eth);
 
     memcpy(arph->sha, hwaddr, 6);
     arph->spa = addr;
@@ -141,7 +141,7 @@ void ARP::request(pk_buff *pkb, uint32_t addr, uint8_t hwaddr[], uint32_t tpa) {
     memcpy(eth->smac, hwaddr, 6);
     eth->type = htons(ETH_P_ARP);
 
-    size_t len = sizeof(struct arp_hdr) + sizeof(struct eth_frame);
+    size_t len = sizeof(struct arphdr) + sizeof(struct eth_frame);
     tapd->write(pkb->data, len);
 }
 

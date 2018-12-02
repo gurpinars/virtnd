@@ -38,6 +38,11 @@ private:
     } __attribute__((packed));
 
 
+    inline struct icmp *icmp_hdr(struct iphdr *iph) {
+        return reinterpret_cast<icmp *>(iph->data);
+    }
+
+
 };
 
 extern ICMP *icmp;

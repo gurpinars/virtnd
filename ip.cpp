@@ -18,7 +18,7 @@ IP *IP::instance() {
 void IP::recv(pk_buff *pkb, uint8_t hwaddr[]) {
 
     auto eth = eth_hdr(pkb->data);
-    auto iph = emit_hdr(eth);
+    auto iph = ip_hdr(eth);
 
     if (iph->version != IPv4) {
         std::cerr << "Version is not IPv4\n";

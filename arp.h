@@ -34,7 +34,7 @@ public:
 private:
     explicit ARP();
     ~ARP();
-    struct arp_hdr {
+    struct arphdr {
         uint16_t hrd;           /* Hardware type */
         uint16_t pro;           /* Protocol type */
         uint8_t hln;            /* Hardware Address Length */
@@ -56,8 +56,8 @@ private:
     cache_timer ct{};
     std::map<uint32_t, arp_cache> trans_table;  /*Translation table*/
 
-    inline struct arp_hdr *emit_hdr(eth_frame *eth) {
-        return reinterpret_cast<arp_hdr *>(eth->payload);
+    inline struct arphdr *arp_hdr(eth_frame *eth) {
+        return reinterpret_cast<arphdr *>(eth->payload);
     }
 
    static void *chck_table(void *contex);

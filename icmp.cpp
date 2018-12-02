@@ -31,8 +31,8 @@ ICMP *ICMP::instance() {
 
 void ICMP::recv(pk_buff *pkb, uint8_t hwaddr[]) {
     auto eth = eth_hdr(pkb->data);
-    auto iph = reinterpret_cast<iphdr *>(eth->payload);
-    auto icmph = reinterpret_cast<icmp *>(iph->data);
+    auto iph = ip_hdr(eth);
+    auto icmph =icmp_hdr(iph);
 
     int icmp_len = iph->len - (iph->ihl * 4);
 
@@ -55,8 +55,8 @@ void ICMP::recv(pk_buff *pkb, uint8_t hwaddr[]) {
 
 void ICMP::reply(pk_buff *pkb, uint8_t hwaddr[]) {
     auto eth = eth_hdr(pkb->data);
-    auto iph = reinterpret_cast<iphdr *>(eth->payload);
-    auto icmph = reinterpret_cast<icmp *>(iph->data);
+    auto iph = ip_hdr(eth);
+    auto icmph =icmp_hdr(iph);
 
     int icmp_len = iph->len - (iph->ihl * 4);
     icmph->type = ECHO_REPLY;
