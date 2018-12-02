@@ -4,6 +4,12 @@
 #include <cstdint>
 #include "pk_buff.h"
 
+static constexpr uint8_t ECHO_REPLY = 0x00;
+static constexpr uint8_t DST_UNREACHABLE = 0x03;
+static constexpr uint8_t ECHO_REQUEST = 0x08;
+static constexpr uint8_t TIME_EXCEEDED = 0x0b;
+static constexpr uint8_t MALFORMED = 0x0c;
+
 
 class ICMP {
 public:
@@ -11,7 +17,7 @@ public:
     ICMP(const ICMP &) = delete;
     ICMP &operator=(const ICMP &)= delete;
     void recv(pk_buff *);
-    void reply(pk_buff *);
+    void send(pk_buff *, uint8_t, uint8_t);
 
 private:
     ICMP() {};
@@ -43,6 +49,7 @@ private:
 
 
 };
+
 
 extern ICMP *icmp;
 #endif //VIRTND_ICMP_H
