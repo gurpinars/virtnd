@@ -5,7 +5,6 @@
 #include "ip.h"
 #include "icmp.h"
 #include "arp.h"
-#include "pk_buff.h"
 
 /*
  * rfc 791
@@ -70,7 +69,7 @@ void IP::recv(pk_buff *pkb) {
     }
 }
 
-void IP::send(pk_buff *pkb) {
+void IP::send(pk_buff *pkb, uint8_t pro) {
     auto eth = eth_hdr(pkb->data);
     auto iph = ip_hdr(eth);
 
@@ -88,7 +87,7 @@ void IP::send(pk_buff *pkb) {
     iph->tos = 0;
     iph->fragoff = 0x4000;
     iph->ttl = 64;
-    iph->pro = ICMPv4;
+    iph->pro = pro;
     iph->cksum = 0;
 
     // swap saddr,daddr
