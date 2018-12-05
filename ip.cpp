@@ -18,7 +18,6 @@ IP *IP::instance() {
 }
 
 void IP::recv(pk_buff *pkb) {
-
     auto eth = eth_hdr(pkb->data);
     auto iph = ip_hdr(eth);
 
@@ -43,7 +42,8 @@ void IP::recv(pk_buff *pkb) {
     }
 
     if (iph->ttl == 0) {
-        std::cerr << "The Datagram must be destroyed\n";
+        std::cerr << "Ip TTL is 0\n";
+        icmp->send(pkb, TIME_EXCEEDED, 0x00);
         return;
     }
 
@@ -57,6 +57,14 @@ void IP::recv(pk_buff *pkb) {
     iph->daddr = ntohl(iph->daddr);
     iph->len = ntohs(iph->len);
     iph->id = ntohs(iph->id);
+
+    auto rt = route->lookup(iph->daddr);
+    pkb->rtdst = rt;
+
+    // Is this packet for us
+    if (!(rt.flags & RT_HOST)) {
+        return;
+    }
 
     switch (iph->pro) {
         case ICMPv4:
@@ -73,15 +81,6 @@ void IP::send(pk_buff *pkb, uint8_t pro) {
     auto eth = eth_hdr(pkb->data);
     auto iph = ip_hdr(eth);
 
-    auto rt = route->lookup(ntohl(iph->saddr));
-    if (!rt.gateway) {
-        // dest unreach
-        std::cerr << "route lookup fail\n";
-        return;
-    }
-
-    pkb->rtdst = rt;
-
     iph->version = IPv4;
     iph->ihl = 0x05;
     iph->tos = 0;
@@ -95,8 +94,8 @@ void IP::send(pk_buff *pkb, uint8_t pro) {
     iph->daddr ^= iph->saddr;
     iph->saddr ^= iph->daddr;
 
-    if (rt.flags & RT_GATEWAY)
-        iph->daddr = rt.gateway;
+    if (pkb->rtdst.flags & RT_GATEWAY)
+        iph->daddr = pkb->rtdst.gateway;
 
     auto c = arp->cache_lookup(iph->daddr);
 
