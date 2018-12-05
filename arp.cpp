@@ -4,7 +4,6 @@
 #include <netinet/in.h>
 #include <linux/if_ether.h>
 #include "arp.h"
-#include "pk_buff.h"
 
 /*
  * rfc 826
@@ -72,7 +71,7 @@ void ARP::recv(pk_buff *pkb, uint32_t addr) {
 
     int merge = false;
     arp_cache found = cache_lookup(arph->spa);
-    if (found.time) {
+    if (found.filled) {
         cache_update(arph->spa, arph->sha);
         merge = true;
     }

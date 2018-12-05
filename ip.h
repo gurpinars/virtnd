@@ -30,17 +30,16 @@ inline struct iphdr *ip_hdr(struct eth_frame *eth) {
 
 class IP {
 public:
-    static IP* instance();
+    static IP *instance();
     IP(const IP &) = delete;
     IP &operator=(const IP &)= delete;
     void recv(pk_buff *);
-    void send(pk_buff *);
+    void send(pk_buff *, uint8_t);
 
 private:
-   IP(){};
+    IP() {};
 
 };
-
 
 
 extern IP *ip;

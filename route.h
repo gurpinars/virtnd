@@ -7,8 +7,6 @@
 static constexpr uint8_t RT_LOOPBACK = 0x01;
 static constexpr uint8_t RT_GATEWAY = 0x02;
 static constexpr uint8_t RT_HOST   =  0x04;
-static constexpr uint8_t RT_REJECT  = 0x08;
-static constexpr uint8_t RT_UP      = 0x10;
 
 struct rtentry {
     uint32_t dst;
