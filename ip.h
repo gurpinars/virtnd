@@ -7,6 +7,7 @@
 
 static constexpr uint8_t IPv4 = 0x04;
 static constexpr uint8_t IP_TCP = 0x06;
+static constexpr uint8_t IP_UDP = 0x11;
 static constexpr uint8_t ICMPv4 = 0x01;
 
 struct iphdr {
@@ -38,6 +39,8 @@ public:
 
 private:
     IP() {};
+    void forward(pk_buff *);
+    void send_out(pk_buff *,uint8_t *);
 
 };
 

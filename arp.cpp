@@ -111,7 +111,7 @@ void ARP::reply(pk_buff *pkb, uint32_t addr) {
     arph->hrd = htons(arph->hrd);
     arph->pro = htons(arph->pro);
 
-    ethn->send(pkb, arph->tha, arph->sha, pkb->len, ETH_P_ARP);
+    ethn->xmit(pkb, arph->tha, arph->sha, pkb->len, ETH_P_ARP);
 
 
 }
@@ -138,7 +138,7 @@ void ARP::request(pk_buff *pkb, uint32_t addr, uint32_t tpa) {
 
     size_t len = sizeof(struct arphdr) + sizeof(struct eth_frame);
 
-    ethn->send(pkb, arph->tha, arph->sha, len, ETH_P_ARP);
+    ethn->xmit(pkb, arph->tha, arph->sha, len, ETH_P_ARP);
 
 }
 

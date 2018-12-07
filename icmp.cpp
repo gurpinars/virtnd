@@ -75,7 +75,6 @@ void ICMP::send(pk_buff *pkb, uint8_t type, uint8_t code) {
         iph->saddr = ntohl(iph->saddr);
         iph->daddr = ntohl(iph->daddr);
         iph->len = ntohs(iph->len);
-        iph->id = ntohs(iph->id);
 
     }
 

@@ -10,7 +10,7 @@ ETH *ETH::instance() {
     return &ins;
 }
 
-void ETH::send(pk_buff *pkb,
+void ETH::xmit(pk_buff *pkb,
                const uint8_t *dst_hwaddr,
                const uint8_t *hwaddr,
                ssize_t len,
