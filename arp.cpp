@@ -4,6 +4,7 @@
 #include <netinet/in.h>
 #include <linux/if_ether.h>
 #include "arp.h"
+#include "pk_buff.h"
 
 /*
  * rfc 826
@@ -102,7 +103,7 @@ void ARP::reply(pk_buff *pkb, uint32_t addr) {
 
     eth->type = htons(eth->type);
 
-    memcpy(arph->sha, pkb->hwaddr, 6);
+    memcpy(arph->sha, pkb->dev_hwaddr, 6);
     arph->spa = htonl(addr);
 
     arph->op = ARP_REPLY;
@@ -120,7 +121,7 @@ void ARP::request(pk_buff *pkb, uint32_t addr, uint32_t tpa) {
     auto eth = eth_hdr(pkb->data);
     auto arph = arp_hdr(eth);
 
-    memcpy(arph->sha, pkb->hwaddr, 6);
+    memcpy(arph->sha, pkb->dev_hwaddr, 6);
     arph->spa = addr;
 
     memcpy(arph->tha, hwbroadcast, 6);

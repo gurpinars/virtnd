@@ -5,6 +5,7 @@
 #include "icmp.h"
 #include "utils.h"
 #include "arp.h"
+#include "pk_buff.h"
 
 /*
  * rfc 792
@@ -73,7 +74,7 @@ void ICMP::send(pk_buff *pkb, uint8_t type, uint8_t code) {
         memcpy(ptr + 4 + (4 * iph->ihl), f64, 8);
 
         iph->saddr = ntohl(iph->saddr);
-        iph->daddr = ntohl(iph->daddr);
+        iph->daddr = pkb->dev_addr;
         iph->len = ntohs(iph->len);
 
     }

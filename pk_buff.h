@@ -6,7 +6,8 @@
 typedef struct {
     ssize_t len;
     uint8_t *data;
-    uint8_t hwaddr[6];
+    uint8_t dev_hwaddr[6];
+    uint32_t dev_addr;
     rtentry rtdst;
 
 } pk_buff;

@@ -5,14 +5,14 @@
 #include "utils.h"
 
 uint32_t inet_bf(const char *addr) {
-    uint32_t dst = 0;
+    struct in_addr ia{};
 
-    if (inet_pton(AF_INET, addr, &dst) != 1) {
+    if (inet_pton(AF_INET, addr, &ia) != 1) {
         perror("inet binary formatting failed");
         exit(1);
     }
 
-    return ntohl(dst);
+    return ntohl(ia.s_addr);
 }
 
 std::string inet_pf(uint32_t addr) {

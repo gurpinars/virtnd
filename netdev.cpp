@@ -74,7 +74,8 @@ void NetDev::loop() {
                 }
 
                 pkb->len = nread;
-                memcpy(pkb->hwaddr, hwaddr, 6);
+                pkb->dev_addr=addr;
+                memcpy(pkb->dev_hwaddr, hwaddr, 6);
 
                 auto *eth = eth_hdr(pkb->data);
                 eth->type = htons(eth->type);
