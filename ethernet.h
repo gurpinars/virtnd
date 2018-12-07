@@ -17,7 +17,7 @@ public:
     ETH(const ETH &) = delete;
     ETH &operator=(const ETH &)= delete;
 
-    void send(pk_buff *, const uint8_t*, const uint8_t*, ssize_t, uint16_t);
+    void xmit(pk_buff *, const uint8_t*, const uint8_t*, ssize_t, uint16_t);
 
 private:
     ETH() {};

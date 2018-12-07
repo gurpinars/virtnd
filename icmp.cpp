@@ -70,12 +70,11 @@ void ICMP::send(pk_buff *pkb, uint8_t type, uint8_t code) {
         *ptr = 0x0000;
 
         memcpy(ptr + 4, iph, 4 * iph->ihl);
-        memcpy(ptr + 24, f64, 8);
+        memcpy(ptr + 4 + (4 * iph->ihl), f64, 8);
 
         iph->saddr = ntohl(iph->saddr);
         iph->daddr = ntohl(iph->daddr);
         iph->len = ntohs(iph->len);
-        iph->id = ntohs(iph->id);
 
     }
 
