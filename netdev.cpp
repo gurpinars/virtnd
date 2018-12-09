@@ -82,7 +82,7 @@ void NetDev::loop() {
 
                 switch (eth->type) {
                     case ETH_P_ARP:
-                        arp->recv(pkb, addr);
+                        arp->recv(pkb);
                         break;
                     case ETH_P_IP:
                         ip->recv(pkb);
