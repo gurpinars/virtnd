@@ -1,15 +1,29 @@
 #include <iostream>
 #include <netinet/in.h>
 #include <linux/if_ether.h>
+#include <cstring>
+#include <bitset>
 #include "utils.h"
 #include "ip.h"
 #include "icmp.h"
 #include "arp.h"
+#include "pk_buff.h"
 
 /*
  * rfc 791
  * https://tools.ietf.org/html/rfc791
  */
+
+
+/* IP Options */
+static constexpr uint8_t EOOL = 0x0;
+static constexpr uint8_t NOP = 0x1;
+static constexpr uint8_t SEC = 0x82;
+static constexpr uint8_t LSRR = 0x83;
+static constexpr uint8_t SSRR = 0x89;
+static constexpr uint8_t RR = 0x7;
+static constexpr uint8_t SID = 0x88;
+static constexpr uint8_t TS = 0x44;
 
 
 IP *IP::instance() {
@@ -36,7 +50,7 @@ void IP::recv(pk_buff *pkb) {
         return;
     }
 
-    if (iph->ihl * 4 != sizeof(iphdr)) {
+    if (IP_HDR_SZ(iph) < sizeof(iphdr)) {
         std::cerr << "IPv4 header is too small\n";
         return;
     }
@@ -47,15 +61,19 @@ void IP::recv(pk_buff *pkb) {
         return;
     }
 
-    auto cksum = checksum(iph, iph->ihl * 4);
+    auto cksum = checksum(iph, IP_HDR_SZ(iph));
     if (cksum != 0) {
         std::cerr << "IP Invalid Checksum\n";
         return;
     }
 
+
     iph->saddr = ntohl(iph->saddr);
     iph->daddr = ntohl(iph->daddr);
     iph->len = ntohs(iph->len);
+
+    if (iph->ihl > 5)
+        check_lsrr(iph);
 
     auto rt = route->lookup(iph->daddr);
     pkb->rtdst = rt;
@@ -98,7 +116,7 @@ void IP::send(pk_buff *pkb, uint8_t pro) {
 
     if (pkb->rtdst.flags & RT_LOOPBACK) {
         std::cout << "To loopback\n";
-        send_out(pkb, pkb->hwaddr);
+        send_out(pkb, pkb->dev_hwaddr);
         return;
     }
 
@@ -113,9 +131,14 @@ void IP::send(pk_buff *pkb, uint8_t pro) {
 
 }
 
+
 void IP::forward(pk_buff *pkb) {
     auto eth = eth_hdr(pkb->data);
     auto iph = ip_hdr(eth);
+
+    iph->saddr = htonl(iph->saddr);
+    iph->daddr = htonl(iph->daddr);
+    iph->len = htons(iph->len);
 
     if (iph->ttl <= 1) {
         icmp->send(pkb, TIME_EXCEEDED, 0x00);
@@ -127,9 +150,11 @@ void IP::forward(pk_buff *pkb) {
     if ((pkb->rtdst.flags & RT_GATEWAY) || pkb->rtdst.metric > 0)
         iph->daddr = pkb->rtdst.gateway;
 
+    std::cout << "Forwarding\n";
     send(pkb, iph->pro);
 
 }
+
 
 void IP::send_out(pk_buff *pkb, uint8_t *hwaddr) {
     auto eth = eth_hdr(pkb->data);
@@ -141,7 +166,42 @@ void IP::send_out(pk_buff *pkb, uint8_t *hwaddr) {
     iph->fragoff = htons(iph->fragoff);
 
     iph->cksum = checksum(iph, 4 * iph->ihl);
-    ethn->xmit(pkb, hwaddr, pkb->hwaddr, pkb->len, ETH_P_IP);
+    ethn->xmit(pkb, hwaddr, pkb->dev_hwaddr, pkb->len, ETH_P_IP);
+}
+
+
+void IP::check_lsrr(iphdr *iph) {
+    uint8_t dst[4];
+
+    int opts_count = IP_HDR_SZ(iph) - MIN_IP_HDR_SZ;
+    auto *options = reinterpret_cast<uint8_t *>(iph->data);
+
+    for (int i = 0; i < opts_count; ++i) {
+        switch (*(options + i) & 0xff) {
+            case LSRR:
+                memcpy(dst, (options + i) + 3, 4);
+                break;
+            case EOOL:
+            case NOP:
+            case SEC:
+            case SSRR:
+            case RR:
+            case SID:
+            case TS:
+            default:
+                break;
+        }
+    }
+
+   if (dst) {
+       auto dst0 = std::bitset<8>(dst[0]).to_string();
+       auto dst1 = std::bitset<8>(dst[1]).to_string();
+       auto dst2 = std::bitset<8>(dst[2]).to_string();
+       auto dst3 = std::bitset<8>(dst[3]).to_string();
+       auto bf = dst0 + dst1 + dst2 + dst3;
+
+       iph->daddr = std::bitset<32>(bf).to_ulong();
+   }
 }
 
 IP *ip = IP::instance();

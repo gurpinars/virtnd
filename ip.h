@@ -10,6 +10,9 @@ static constexpr uint8_t IP_TCP = 0x06;
 static constexpr uint8_t IP_UDP = 0x11;
 static constexpr uint8_t ICMPv4 = 0x01;
 
+#define MIN_IP_HDR_SZ 20
+#define IP_HDR_SZ(iph) (4 * (iph)->ihl)
+
 struct iphdr {
     uint8_t ihl:4;          /* Internet Header Length */
     uint8_t version:4;      /* Version */
@@ -41,6 +44,7 @@ private:
     IP() {};
     void forward(pk_buff *);
     void send_out(pk_buff *,uint8_t *);
+    void check_lsrr(iphdr *);
 
 };
 

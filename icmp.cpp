@@ -12,6 +12,8 @@
  * https://tools.ietf.org/html/rfc792
  */
 
+#define ALLOC_ICMP_PKB(iph) (reinterpret_cast<icmp *>((iph)->data))
+
 
 ICMP *ICMP::instance() {
     static ICMP ins;
@@ -62,6 +64,11 @@ void ICMP::send(pk_buff *pkb, uint8_t type, uint8_t code) {
     uint8_t f64[8];
     memcpy(f64, icmph, 8);
 
+    // Internet Header
+    uint8_t iphdr[IP_HDR_SZ(iph)];
+    memcpy(iphdr, iph, IP_HDR_SZ(iph));
+
+    icmph = ALLOC_ICMP_PKB(iph);
     icmph->type = type;
     icmph->code = code;
     icmph->cksum = 0;
@@ -70,16 +77,15 @@ void ICMP::send(pk_buff *pkb, uint8_t type, uint8_t code) {
         uint8_t *ptr = icmph->data;
         *ptr = 0x0000;
 
-        memcpy(ptr + 4, iph, 4 * iph->ihl);
-        memcpy(ptr + 4 + (4 * iph->ihl), f64, 8);
+        memcpy(ptr + 4, iphdr, IP_HDR_SZ(iph));
+        memcpy(ptr + 4 + IP_HDR_SZ(iph), f64, 8);
 
         iph->saddr = ntohl(iph->saddr);
         iph->daddr = pkb->dev_addr;
         iph->len = ntohs(iph->len);
-
     }
 
-    int icmp_len = iph->len - (4 * iph->ihl);
+    int icmp_len = iph->len - MIN_IP_HDR_SZ;
     icmph->cksum = checksum(icmph, icmp_len);
 
     ip->send(pkb, ICMPv4);
