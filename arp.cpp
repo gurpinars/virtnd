@@ -4,6 +4,7 @@
 #include <netinet/in.h>
 #include <linux/if_ether.h>
 #include "arp.h"
+#include "pk_buff.h"
 
 /*
  * rfc 826
@@ -44,7 +45,7 @@ ARP::~ARP() {
     pthread_mutex_destroy(&ct.mutex);
 }
 
-void ARP::recv(pk_buff *pkb, uint32_t addr) {
+void ARP::recv(pk_buff *pkb) {
     auto eth = eth_hdr(pkb->data);
     auto arph = arp_hdr(eth);
 
@@ -70,13 +71,13 @@ void ARP::recv(pk_buff *pkb, uint32_t addr) {
     }
 
     int merge = false;
-    arp_cache found = cache_lookup(arph->spa);
-    if (found.filled) {
+    auto c = cache_lookup(arph->spa);
+    if (c.filled) {
         cache_update(arph->spa, arph->sha);
         merge = true;
     }
 
-    if (addr == arph->tpa) {
+    if (pkb->dev_addr == arph->tpa) {
         if (!merge)
             cache_ent_create(arph->spa, arph->pro, arph->sha);
     } else
@@ -85,7 +86,7 @@ void ARP::recv(pk_buff *pkb, uint32_t addr) {
     switch (arph->op) {
         case ARP_REQUEST:
             std::cout << "Got 1 ARP Request\n";
-            reply(pkb, addr);
+            reply(pkb);
             break;
         default:
             break;
@@ -93,7 +94,7 @@ void ARP::recv(pk_buff *pkb, uint32_t addr) {
 
 }
 
-void ARP::reply(pk_buff *pkb, uint32_t addr) {
+void ARP::reply(pk_buff *pkb) {
     auto eth = eth_hdr(pkb->data);
     auto arph = arp_hdr(eth);
 
@@ -102,8 +103,8 @@ void ARP::reply(pk_buff *pkb, uint32_t addr) {
 
     eth->type = htons(eth->type);
 
-    memcpy(arph->sha, pkb->hwaddr, 6);
-    arph->spa = htonl(addr);
+    memcpy(arph->sha, pkb->dev_hwaddr, 6);
+    arph->spa = htonl(pkb->dev_addr);
 
     arph->op = ARP_REPLY;
     arph->op = htons(arph->op);
@@ -120,7 +121,7 @@ void ARP::request(pk_buff *pkb, uint32_t addr, uint32_t tpa) {
     auto eth = eth_hdr(pkb->data);
     auto arph = arp_hdr(eth);
 
-    memcpy(arph->sha, pkb->hwaddr, 6);
+    memcpy(arph->sha, pkb->dev_hwaddr, 6);
     arph->spa = addr;
 
     memcpy(arph->tha, hwbroadcast, 6);

@@ -29,22 +29,9 @@ private:
         uint8_t data[];
     } __attribute__((packed));
 
-    struct icmp_echo {
-        uint16_t id;
-        uint16_t seq;
-        uint8_t data[];
-    } __attribute__((packed));
-
-    struct icmp_dst_unreachable {
-        uint8_t unused;
-        uint8_t len;
-        uint16_t var;
-        uint8_t data[];
-    } __attribute__((packed));
-
-
     inline struct icmp *icmp_hdr(struct iphdr *iph) {
-        return reinterpret_cast<icmp *>(iph->data);
+        int offset = IP_HDR_SZ(iph) - MIN_IP_HDR_SZ;
+        return reinterpret_cast<icmp *>(iph->data + offset);
     }
 
 

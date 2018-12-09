@@ -74,14 +74,15 @@ void NetDev::loop() {
                 }
 
                 pkb->len = nread;
-                memcpy(pkb->hwaddr, hwaddr, 6);
+                pkb->dev_addr=addr;
+                memcpy(pkb->dev_hwaddr, hwaddr, 6);
 
                 auto *eth = eth_hdr(pkb->data);
                 eth->type = htons(eth->type);
 
                 switch (eth->type) {
                     case ETH_P_ARP:
-                        arp->recv(pkb, addr);
+                        arp->recv(pkb);
                         break;
                     case ETH_P_IP:
                         ip->recv(pkb);
