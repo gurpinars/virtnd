@@ -165,7 +165,7 @@ void IP::send_out(pk_buff *pkb, uint8_t *hwaddr) {
     iph->saddr = htonl(iph->saddr);
     iph->fragoff = htons(iph->fragoff);
 
-    iph->cksum = checksum(iph, 4 * iph->ihl);
+    iph->cksum = checksum(iph, IP_HDR_SZ(iph));
     ethn->xmit(pkb, hwaddr, pkb->dev_hwaddr, pkb->len, ETH_P_IP);
 }
 

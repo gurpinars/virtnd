@@ -43,7 +43,7 @@ public:
 private:
     IP() {};
     void forward(pk_buff *);
-    void send_out(pk_buff *,uint8_t *);
+    void send_out(pk_buff *, uint8_t *);
     void check_lsrr(iphdr *);
 
 };
