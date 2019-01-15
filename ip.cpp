@@ -73,7 +73,7 @@ void IP::recv(pk_buff *pkb) {
     iph->len = ntohs(iph->len);
 
     if (iph->ihl > 5)
-        check_lsrr(iph);
+        check_opts(iph);
 
     auto rt = route->lookup(iph->daddr);
     pkb->rtdst = rt;
@@ -170,17 +170,25 @@ void IP::send_out(pk_buff *pkb, uint8_t *hwaddr) {
 }
 
 
-void IP::check_lsrr(iphdr *iph) {
-    uint8_t dst[4];
-
+void IP::check_opts(iphdr *iph) {
     int opts_count = IP_HDR_SZ(iph) - MIN_IP_HDR_SZ;
     auto *options = reinterpret_cast<uint8_t *>(iph->data);
 
     for (int i = 0; i < opts_count; ++i) {
         switch (*(options + i) & 0xff) {
-            case LSRR:
+            case LSRR: {
+                uint8_t dst[4];
                 memcpy(dst, (options + i) + 3, 4);
+                
+                auto dst0 = std::bitset<8>(dst[0]).to_string();
+                auto dst1 = std::bitset<8>(dst[1]).to_string();
+                auto dst2 = std::bitset<8>(dst[2]).to_string();
+                auto dst3 = std::bitset<8>(dst[3]).to_string();
+                auto bf = dst0 + dst1 + dst2 + dst3;
+
+                iph->daddr = std::bitset<32>(bf).to_ulong();
                 break;
+            }
             case EOOL:
             case NOP:
             case SEC:
@@ -192,16 +200,6 @@ void IP::check_lsrr(iphdr *iph) {
                 break;
         }
     }
-
-   if (dst) {
-       auto dst0 = std::bitset<8>(dst[0]).to_string();
-       auto dst1 = std::bitset<8>(dst[1]).to_string();
-       auto dst2 = std::bitset<8>(dst[2]).to_string();
-       auto dst3 = std::bitset<8>(dst[3]).to_string();
-       auto bf = dst0 + dst1 + dst2 + dst3;
-
-       iph->daddr = std::bitset<32>(bf).to_ulong();
-   }
 }
 
 IP *ip = IP::instance();
