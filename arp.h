@@ -3,7 +3,8 @@
 
 #include <cstdint>
 #include <map>
-#include <pthread.h>
+#include <thread>
+#include <mutex>
 #include "ethernet.h"
 #include "pk_buff.h"
 
@@ -45,8 +46,8 @@ private:
     } __attribute__((packed));
 
     typedef struct {
-        pthread_t tid;          /* Thread */
-        pthread_mutex_t mutex;  /* Data mutex */
+        std::thread tid;   /* Thread */
+        std::mutex mutex;  /* Data mutex */
         int timeout;
         bool stop;
     } cache_timer;
@@ -58,7 +59,7 @@ private:
         return reinterpret_cast<arphdr *>(eth->payload);
     }
 
-    static void *chck_table(void *contex);
+    static void chck_table(void *contex);
 
 };
 

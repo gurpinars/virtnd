@@ -27,22 +27,12 @@ ARP *ARP::instance() {
 ARP::ARP() {
     ct.stop = false;
     ct.timeout = 600;
-
-    if (pthread_mutex_init(&ct.mutex, nullptr) != 0) {
-        throw std::runtime_error("Mutex initialization failed");
-    }
-
-    if (pthread_create(&ct.tid, nullptr, &chck_table, this) != 0) {
-        pthread_mutex_destroy(&ct.mutex);
-        throw std::runtime_error("Failed to start a thread for arp cache");
-    }
-
+    ct.tid=std::thread(&ARP::chck_table, this);
 }
 
 ARP::~ARP() {
     ct.stop = true;
-    pthread_join(ct.tid, nullptr);
-    pthread_mutex_destroy(&ct.mutex);
+    ct.tid.join();
 }
 
 void ARP::recv(pk_buff *pkb) {
@@ -143,7 +133,7 @@ void ARP::request(pk_buff *pkb, uint32_t addr, uint32_t tpa) {
 
 }
 
-void *ARP::chck_table(void *contex) {
+void ARP::chck_table(void *contex) {
     auto ctx = static_cast<ARP *>(contex);
     while (!ctx->ct.stop) {
         sleep(1);
@@ -151,15 +141,13 @@ void *ARP::chck_table(void *contex) {
         time_t now;
         now = time(nullptr);
 
-        pthread_mutex_lock(&ctx->ct.mutex);
+        std::lock_guard<std::mutex> lockg(ctx->ct.mutex);
 
         for (auto &el:ctx->trans_table) {
             if (difftime(now, el.second.time) > ctx->ct.timeout) {
                 ctx->trans_table.erase(el.first);
             }
         }
-
-        pthread_mutex_unlock(&ctx->ct.mutex);
 
     }
 }
@@ -168,39 +156,33 @@ void *ARP::chck_table(void *contex) {
 arp_cache ARP::cache_lookup(uint32_t addr) {
     arp_cache c{};
     c.filled = false;
-    pthread_mutex_lock(&ct.mutex);
+    std::lock_guard<std::mutex> lockg(ct.mutex);
 
     auto f = trans_table.find(addr);
     if (f != trans_table.end()) {
         c = f->second;
     }
-
-    pthread_mutex_unlock(&ct.mutex);
     return c;
 
 }
 
 void ARP::cache_update(uint32_t addr, uint8_t *sha) {
-    pthread_mutex_lock(&ct.mutex);
+    std::lock_guard<std::mutex> lockg(ct.mutex);
 
     memcpy(trans_table[addr].hwaddr, sha, 6);
     trans_table[addr].time = time(nullptr);
 
-    pthread_mutex_unlock(&ct.mutex);
-
 }
 
 void ARP::cache_ent_create(uint32_t addr, uint16_t pro, uint8_t *sha) {
-    pthread_mutex_lock(&ct.mutex);
+    std::lock_guard<std::mutex> lockg(ct.mutex);
+    
     arp_cache c{};
     c.pro = pro;
     c.filled = true;
     c.time = time(nullptr);
     memcpy(c.hwaddr, sha, 6);
     trans_table.insert(std::make_pair(addr, c));
-
-    pthread_mutex_unlock(&ct.mutex);
-
 }
 
 ARP *arp = ARP::instance();
