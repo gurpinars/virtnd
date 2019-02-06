@@ -26,7 +26,7 @@ void ICMP::recv(pk_buff *pkb) {
     auto iph = ip_hdr(eth);
     auto icmph = icmp_hdr(iph);
 
-    int icmp_len = iph->len - (iph->ihl * 4);
+    int icmp_len = iph->len - IP_HDR_SZ(iph);
 
     auto cksum = checksum(icmph, icmp_len);
     if (cksum != 0) {

@@ -3,7 +3,8 @@
 
 #include <cstdint>
 #include <map>
-#include <pthread.h>
+#include <thread>
+#include <mutex>
 #include "ethernet.h"
 #include "pk_buff.h"
 
@@ -18,23 +19,20 @@ struct arp_cache {
 
 class ARP {
 public:
-
     static ARP *instance();
     ARP(const ARP &) = delete;
     ARP &operator=(const ARP &)= delete;
-
     void recv(pk_buff *);
     void request(pk_buff *, uint32_t, uint32_t);
-    void reply(pk_buff *);
-
     arp_cache cache_lookup(uint32_t);
-    void cache_update(uint32_t, uint8_t*);
-    void cache_ent_create(uint32_t, uint16_t, uint8_t*);
-
 
 private:
     explicit ARP();
     ~ARP();
+    void reply(pk_buff *);
+    void cache_update(uint32_t, uint8_t *);
+    void cache_ent_create(uint32_t, uint16_t, uint8_t *);
+
     struct arphdr {
         uint16_t hrd;           /* Hardware type */
         uint16_t pro;           /* Protocol type */
@@ -48,8 +46,8 @@ private:
     } __attribute__((packed));
 
     typedef struct {
-        pthread_t tid;          /* Thread */
-        pthread_mutex_t mutex;  /* Data mutex */
+        std::thread tid;   /* Thread */
+        std::mutex mutex;  /* Data mutex */
         int timeout;
         bool stop;
     } cache_timer;
@@ -61,7 +59,7 @@ private:
         return reinterpret_cast<arphdr *>(eth->payload);
     }
 
-   static void *chck_table(void *contex);
+    static void chck_table(void *contex);
 
 };
 
