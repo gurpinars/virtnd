@@ -136,7 +136,7 @@ void ARP::request(pk_buff *pkb, uint32_t addr, uint32_t tpa) {
 void ARP::chck_table(void *contex) {
     auto ctx = static_cast<ARP *>(contex);
     while (!ctx->ct.stop) {
-        sleep(1);
+        std::this_thread::sleep_for(std::chrono::seconds(1));
 
         time_t now;
         now = time(nullptr);
