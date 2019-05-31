@@ -2,7 +2,7 @@
 #include <arpa/inet.h>
 #include <cstdio>
 #include <cstdlib>
-#include "utils.h"
+#include <utils.h>
 
 uint32_t inet_bf(const char *addr) {
     struct in_addr ia{};

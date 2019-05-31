@@ -6,7 +6,7 @@
 #include <sys/ioctl.h>
 #include <net/if.h>
 #include <linux/if_tun.h>
-#include "tap.h"
+#include <tap.h>
 
 TAPDev *TAPDev::instance() {
     static TAPDev ins("tap0");
