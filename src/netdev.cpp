@@ -15,8 +15,10 @@ static constexpr int MAX_EVENTS = 32;
 
 NetDev::NetDev(const char *addr, const char *hwaddr) :
         addr(inet_bf(addr)),
-        MTU(1500) {
+        MTU(1500),
+        pkb(new pk_buff) {
 
+    pkb->data = new uint8_t[MTU];
     printf("The device(%s) is up at %s\n", hwaddr, addr);
 
     std::sscanf(hwaddr, "%hhx:%hhx:%hhx:%hhx:%hhx:%hhx",
@@ -27,7 +29,6 @@ NetDev::NetDev(const char *addr, const char *hwaddr) :
                 &this->hwaddr[4],
                 &this->hwaddr[5]);
 
-    pkb = new pk_buff;
 
     epoll_fd = epoll_create1(0);
     if (epoll_fd < 0) {
@@ -63,9 +64,6 @@ void NetDev::loop() {
                 close(events[i].data.fd);
             } else if (events[i].data.fd == tapd->fd()) {
 
-
-                pkb->data = new uint8_t[MTU];
-
                 ssize_t nread = tapd->read(pkb->data, MTU);
 
                 if (nread < 0) {
@@ -74,7 +72,7 @@ void NetDev::loop() {
                 }
 
                 pkb->len = nread;
-                pkb->dev_addr=addr;
+                pkb->dev_addr = addr;
                 memcpy(pkb->dev_hwaddr, hwaddr, 6);
 
                 auto *eth = eth_hdr(pkb->data);
@@ -100,7 +98,7 @@ void NetDev::loop() {
 
 NetDev::~NetDev() {
     close(epoll_fd);
-    delete pkb->data;
+    delete[] pkb->data;
     delete pkb;
 
 
