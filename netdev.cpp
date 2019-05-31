@@ -91,7 +91,7 @@ void NetDev::loop() {
                         break;
                 }
 
-                delete pkb->data;
+                delete[] pkb->data;
             }
         }
 
