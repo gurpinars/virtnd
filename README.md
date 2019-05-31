@@ -7,8 +7,8 @@ Virtual Network Device built on top of linux TAP device
 
 ### Building
 ```bash
-mkdir build && cd build
-cmake .. && cmake --build .
+cd build
+./builder.sh
 ```
 ### Getting Started
 ```bash 
