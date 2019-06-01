@@ -15,10 +15,8 @@ static constexpr int MAX_EVENTS = 32;
 
 NetDev::NetDev(const char *addr, const char *hwaddr) :
         addr(inet_bf(addr)),
-        MTU(1500),
         pkb(new pk_buff) {
 
-    pkb->data = new uint8_t[MTU];
     printf("The device(%s) is up at %s\n", hwaddr, addr);
 
     std::sscanf(hwaddr, "%hhx:%hhx:%hhx:%hhx:%hhx:%hhx",
@@ -63,7 +61,6 @@ void NetDev::loop() {
                 std::cerr << "epoll event error\n";
                 close(events[i].data.fd);
             } else if (events[i].data.fd == tapd->fd()) {
-
                 ssize_t nread = tapd->read(pkb->data, MTU);
 
                 if (nread < 0) {
@@ -89,7 +86,7 @@ void NetDev::loop() {
                         break;
                 }
 
-                delete[] pkb->data;
+
             }
         }
 
@@ -98,7 +95,6 @@ void NetDev::loop() {
 
 NetDev::~NetDev() {
     close(epoll_fd);
-    delete[] pkb->data;
     delete pkb;
 
 
