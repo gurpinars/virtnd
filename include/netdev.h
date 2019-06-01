@@ -3,7 +3,7 @@
 
 #include <cstdint>
 #include <unistd.h>
-#include "pk_buff.h"
+#include <pk_buff.h>
 
 
 class NetDev {
@@ -15,7 +15,6 @@ public:
 private:
     uint32_t addr;
     uint8_t hwaddr[6];
-    uint32_t MTU;
     int epoll_fd;
     pk_buff *pkb;
 

@@ -2,7 +2,7 @@
 #define VIRTND_ETHERNET_H
 
 #include <cstdint>
-#include "pk_buff.h"
+#include <pk_buff.h>
 
 struct eth_frame {
     uint8_t dmac[6];
