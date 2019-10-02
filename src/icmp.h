@@ -2,7 +2,7 @@
 #define VIRTND_ICMP_H
 
 #include <cstdint>
-#include <pk_buff.h>
+#include "pk_buff.h"
 
 static constexpr uint8_t ECHO_REPLY = 0x00;
 static constexpr uint8_t DST_UNREACHABLE = 0x03;

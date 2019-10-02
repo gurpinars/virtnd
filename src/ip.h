@@ -2,8 +2,8 @@
 #define VIRTND_IP_H
 
 #include <cstdint>
-#include <ethernet.h>
-#include <pk_buff.h>
+#include "ethernet.h"
+#include "pk_buff.h"
 
 static constexpr uint8_t IPv4 = 0x04;
 static constexpr uint8_t IP_TCP = 0x06;

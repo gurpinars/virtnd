@@ -1,8 +1,8 @@
 #include <netinet/in.h>
 #include <cstring>
 #include <linux/if_ether.h>
-#include <ethernet.h>
-#include <tap.h>
+#include "ethernet.h"
+#include "tap.h"
 
 
 ETH *ETH::instance() {

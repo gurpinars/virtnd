@@ -3,8 +3,8 @@
 #include <unistd.h>
 #include <netinet/in.h>
 #include <linux/if_ether.h>
-#include <arp.h>
-#include <pk_buff.h>
+#include "arp.h"
+#include "pk_buff.h"
 
 /*
  * rfc 826
