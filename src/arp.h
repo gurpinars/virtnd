@@ -10,7 +10,10 @@
 
 
 struct arp_cache {
-    uint8_t hwaddr[6];  /* Sender Hardware Address */
+    arp_cache():pro(0),time(0),filled(false) { memset(hwaddr,0,6); }
+    arp_cache(arp_cache &&other) noexcept;
+    arp_cache& operator=(arp_cache &&other) noexcept;
+    uint8_t hwaddr[6]{};  /* Sender Hardware Address */
     uint16_t pro;       /* Protocol type */
     time_t time;
     bool filled;
@@ -53,13 +56,13 @@ private:
     } cache_timer;
 
     cache_timer ct{};
-    std::map<uint32_t, arp_cache> trans_table;  /*Translation table*/
+    std::map<uint32_t, arp_cache> trans_table;  /* Translation table */
 
     inline struct arphdr *arp_hdr(eth_frame *eth) {
         return reinterpret_cast<arphdr *>(eth->payload);
     }
 
-    static void chck_table(void *contex);
+    static void check_trans_table(void *contex);
 
 };
 

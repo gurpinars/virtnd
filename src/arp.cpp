@@ -27,7 +27,7 @@ ARP *ARP::instance() {
 ARP::ARP() {
     ct.stop = false;
     ct.timeout = 600;
-    ct.tid=std::thread(&ARP::chck_table, this);
+    ct.tid=std::thread(&ARP::check_trans_table, this);
 }
 
 ARP::~ARP() {
@@ -133,7 +133,7 @@ void ARP::request(pk_buff *pkb, uint32_t addr, uint32_t tpa) {
 
 }
 
-void ARP::chck_table(void *contex) {
+void ARP::check_trans_table(void *contex) {
     auto ctx = static_cast<ARP *>(contex);
     while (!ctx->ct.stop) {
         std::this_thread::sleep_for(std::chrono::seconds(1));
@@ -155,14 +155,13 @@ void ARP::chck_table(void *contex) {
 
 arp_cache ARP::cache_lookup(uint32_t addr) {
     arp_cache c{};
-    c.filled = false;
     std::lock_guard<std::mutex> lockg(ct.mutex);
 
     auto f = trans_table.find(addr);
     if (f != trans_table.end()) {
-        c = f->second;
+        return std::move(f->second);
     }
-    return c;
+    return std::move(c);
 
 }
 
@@ -182,17 +181,36 @@ void ARP::cache_ent_create(uint32_t addr, uint16_t pro, uint8_t *sha) {
     c.filled = true;
     c.time = time(nullptr);
     memcpy(c.hwaddr, sha, 6);
-    trans_table.insert(std::make_pair(addr, c));
+    trans_table[addr] = std::move(c);
+}
+
+arp_cache &arp_cache::operator=(arp_cache &&other) noexcept {
+    if (this == &other) return *this;
+    memcpy(hwaddr,other.hwaddr,6);
+    pro = other.pro;
+    time = other.time;
+    filled=other.filled;
+
+    memset(other.hwaddr,0,6);
+    other.pro=0;
+    other.time = 0;
+    other.filled= false;
+
+    return *this;
+}
+
+arp_cache::arp_cache(arp_cache &&other) noexcept {
+    memcpy(hwaddr,other.hwaddr,6);
+    pro = other.pro;
+    time = other.time;
+    filled=other.filled;
+
+    memset(other.hwaddr,0,6);
+    other.pro=0;
+    other.time = 0;
+    other.filled= false;
+
 }
 
 ARP *arp = ARP::instance();
-
-
-
-
-
-
-
-
-
 
