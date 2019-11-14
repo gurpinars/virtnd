@@ -3,6 +3,7 @@
 #include <linux/if_ether.h>
 #include <cstring>
 #include <bitset>
+#include <arpa/inet.h>
 #include "utils.h"
 #include "ip.h"
 #include "icmp.h"
@@ -123,11 +124,10 @@ void IP::send(pk_buff *pkb, uint8_t pro) {
     if (pkb->rtdst.flags & RT_GATEWAY)
         iph->daddr = pkb->rtdst.gateway;
 
-    auto c = arp->cache_lookup(iph->daddr);
-    if (c.filled)
-        send_out(pkb, c.hwaddr);
-    else
-        arp->request(pkb, iph->saddr, iph->daddr);
+    auto found = arp->cache_lookup(iph->daddr);
+    if (found)
+        send_out(pkb, found.hwaddr);
+    else arp->request(pkb, iph->saddr, iph->daddr);
 
 }
 

@@ -10,13 +10,15 @@
 
 
 struct arp_cache {
-    arp_cache():pro(0),time(0),filled(false) { memset(hwaddr,0,6); }
-    arp_cache(arp_cache &&other) noexcept;
-    arp_cache& operator=(arp_cache &&other) noexcept;
+    arp_cache();
+    explicit operator bool() const {
+        return (hwaddr[0] != 0 || hwaddr[1] != 0 || hwaddr[2] != 0 ||
+                hwaddr[3] != 0 || hwaddr[4] != 0 || hwaddr[5] != 0);
+    }
+
     uint8_t hwaddr[6]{};  /* Sender Hardware Address */
-    uint16_t pro;       /* Protocol type */
+    uint16_t pro;         /* Protocol type */
     time_t time;
-    bool filled;
 };
 
 

@@ -3,6 +3,7 @@
 #include <unistd.h>
 #include <netinet/in.h>
 #include <linux/if_ether.h>
+#include <arpa/inet.h>
 #include "arp.h"
 #include "pk_buff.h"
 
@@ -61,8 +62,8 @@ void ARP::recv(pk_buff *pkb) {
     }
 
     int merge = false;
-    auto c = cache_lookup(arph->spa);
-    if (c.filled) {
+    auto found = cache_lookup(arph->spa);
+    if (found) {
         cache_update(arph->spa, arph->sha);
         merge = true;
     }
@@ -154,14 +155,13 @@ void ARP::check_trans_table(void *contex) {
 
 
 arp_cache ARP::cache_lookup(uint32_t addr) {
-    arp_cache c{};
     std::lock_guard<std::mutex> lockg(ct.mutex);
 
-    auto f = trans_table.find(addr);
-    if (f != trans_table.end()) {
-        return std::move(f->second);
+    auto found = trans_table.find(addr);
+    if (found != trans_table.end()) {
+        return found->second;
     }
-    return std::move(c);
+    return {};
 
 }
 
@@ -175,41 +175,16 @@ void ARP::cache_update(uint32_t addr, uint8_t *sha) {
 
 void ARP::cache_ent_create(uint32_t addr, uint16_t pro, uint8_t *sha) {
     std::lock_guard<std::mutex> lockg(ct.mutex);
-    
-    arp_cache c{};
-    c.pro = pro;
-    c.filled = true;
-    c.time = time(nullptr);
-    memcpy(c.hwaddr, sha, 6);
-    trans_table[addr] = std::move(c);
+
+    arp_cache cache{};
+    cache.pro = pro;
+    cache.time = time(nullptr);
+    memcpy(cache.hwaddr, sha, 6);
+    trans_table[addr] = cache;
 }
 
-arp_cache &arp_cache::operator=(arp_cache &&other) noexcept {
-    if (this == &other) return *this;
-    memcpy(hwaddr,other.hwaddr,6);
-    pro = other.pro;
-    time = other.time;
-    filled=other.filled;
-
-    memset(other.hwaddr,0,6);
-    other.pro=0;
-    other.time = 0;
-    other.filled= false;
-
-    return *this;
-}
-
-arp_cache::arp_cache(arp_cache &&other) noexcept {
-    memcpy(hwaddr,other.hwaddr,6);
-    pro = other.pro;
-    time = other.time;
-    filled=other.filled;
-
-    memset(other.hwaddr,0,6);
-    other.pro=0;
-    other.time = 0;
-    other.filled= false;
-
+arp_cache::arp_cache():pro(0),time(0) {
+    memset(hwaddr,0,6);
 }
 
 ARP *arp = ARP::instance();
