@@ -2,8 +2,8 @@
 #include <cstring>
 #include <unistd.h>
 #include <netinet/in.h>
-#include <linux/if_ether.h>
 #include <arpa/inet.h>
+#include "ethernet.h"
 #include "arp.h"
 #include "pk_buff.h"
 

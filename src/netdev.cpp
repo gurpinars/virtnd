@@ -1,7 +1,6 @@
 #include <sys/epoll.h>
 #include <cstring>
 #include <netinet/in.h>
-#include <linux/if_ether.h>
 #include "netdev.h"
 #include "utils.h"
 #include "tap.h"

@@ -1,11 +1,11 @@
 #include <iostream>
 #include <netinet/in.h>
-#include <linux/if_ether.h>
 #include <cstring>
 #include <bitset>
 #include <arpa/inet.h>
 #include "utils.h"
 #include "ip.h"
+#include "ethernet.h"
 #include "icmp.h"
 #include "arp.h"
 #include "pk_buff.h"

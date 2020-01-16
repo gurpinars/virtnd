@@ -4,6 +4,9 @@
 #include <cstdint>
 #include "pk_buff.h"
 
+static constexpr uint16_t ETH_P_ARP = 0x0806;
+static constexpr uint16_t ETH_P_IP = 0x0800;
+
 struct eth_frame {
     uint8_t dmac[6];
     uint8_t smac[6];
