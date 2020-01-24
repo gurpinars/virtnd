@@ -27,7 +27,7 @@ ARP *ARP::instance() {
 
 ARP::ARP() {
     ct.stop = false;
-    ct.timeout = 600;
+    ct.timeout = 5;
     ct.tid=std::thread(&ARP::check_trans_table, this);
 }
 
@@ -142,13 +142,15 @@ void ARP::check_trans_table(void *contex) {
         time_t now;
         now = time(nullptr);
 
-        std::lock_guard<std::mutex> lockg(ctx->ct.mutex);
+        ctx->ct.mutex.lock();
 
-        for (auto &el:ctx->trans_table) {
-            if (difftime(now, el.second.time) > ctx->ct.timeout) {
-                ctx->trans_table.erase(el.first);
-            }
+        for (auto it=ctx->trans_table.cbegin();it != ctx->trans_table.cend();) {
+            if (difftime(now, it->second.time) > ctx->ct.timeout) {
+                ctx->trans_table.erase(it++);
+            } 
+            else ++it; 
         }
+        ctx->ct.mutex.unlock();
 
     }
 }

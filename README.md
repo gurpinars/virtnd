@@ -28,7 +28,3 @@ PING 10.0.0.1 (10.0.0.1) 56(84) bytes of data.
 rtt min/avg/max/mdev = 0.101/0.189/0.266/0.061 ms
 
 ```
-
-
-
-TODO: UDP,TCP
