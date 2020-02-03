@@ -4,11 +4,12 @@
 #include <cstdint>
 #include <unistd.h>
 #include "pk_buff.h"
+#include "observer.hpp"
 
 
-class NetDev {
+class NetDev: public Subject {
 public:
-    NetDev(const char *, const char *);
+    NetDev(const char *addr, const char *hwaddr);
     ~NetDev();
     void loop();
 

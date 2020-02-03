@@ -1,12 +1,9 @@
 #include <sys/epoll.h>
 #include <cstring>
-#include <netinet/in.h>
+#include <array>
 #include "netdev.h"
 #include "utils.h"
 #include "tap.h"
-#include "ethernet.h"
-#include "arp.h"
-#include "ip.h"
 #include "pk_buff.h"
 
 static constexpr int MAX_EVENTS = 32;
@@ -71,21 +68,8 @@ void NetDev::loop() {
                 pkb->dev_addr = addr;
                 memcpy(pkb->dev_hwaddr, hwaddr, 6);
 
-                auto *eth = eth_hdr(pkb->data);
-                eth->type = htons(eth->type);
-
-                switch (eth->type) {
-                    case ETH_P_ARP:
-                        arp->recv(pkb);
-                        break;
-                    case ETH_P_IP:
-                        ip->recv(pkb);
-                        break;
-                    default:
-                        break;
-                }
-
-
+                this->notify(*pkb);
+                
             }
         }
 
