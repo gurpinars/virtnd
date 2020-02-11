@@ -3,28 +3,29 @@
 #include <vector>
 #include "pk_buff.h"
 
-
+template <typename T, bool is_rvalue=std::is_rvalue_reference<T>::value>
 class Observer {
 public:
-    virtual void update(pk_buff data) = 0;
+    using data_t = typename std::conditional<is_rvalue, typename std::decay<T>::type, const T&>::type;
+    virtual void update(data_t data) = 0;
 };
 
-
+template <typename T, bool is_rvalue=std::is_rvalue_reference<T>::value>
 class Subject {
 public:
-    void attach(Observer *ob) {
+    using data_t = typename std::conditional<is_rvalue, typename std::decay<T>::type, const T&>::type;
+    void attach(Observer<T> *ob) {
         m_observers.push_back(ob);
     }
     
-    void notify(pk_buff data) {
+    void notify(data_t data) {
         for (auto &ob:m_observers) {
-        ob->update(data);
-
+        ob->update(std::move(data));
         }
     }
 
 private:
-    std::vector<Observer*> m_observers;
+    std::vector<Observer<T>*> m_observers;
 };
 
 

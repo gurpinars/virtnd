@@ -7,7 +7,7 @@
 #include "observer.hpp"
 
 
-class NetDev: public Subject {
+class NetDev: public Subject<pk_buff&&> {
 public:
     NetDev(const char *addr, const char *hwaddr);
     ~NetDev();
@@ -17,7 +17,6 @@ private:
     uint32_t addr;
     uint8_t hwaddr[6];
     int epoll_fd;
-    pk_buff *pkb;
 
 };
 

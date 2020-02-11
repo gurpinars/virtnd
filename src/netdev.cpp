@@ -10,8 +10,7 @@ static constexpr int MAX_EVENTS = 32;
 
 
 NetDev::NetDev(const char *addr, const char *hwaddr) :
-        addr(inet_bf(addr)),
-        pkb(new pk_buff) {
+        addr(inet_bf(addr)){
 
     printf("The device(%s) is up at %s\n", hwaddr, addr);
 
@@ -44,6 +43,7 @@ NetDev::NetDev(const char *addr, const char *hwaddr) :
 
 void NetDev::loop() {
     std::array<struct epoll_event, ::MAX_EVENTS> events{};
+    pk_buff pkb;
 
     while (true) {
         int nevents = epoll_wait(epoll_fd, events.data(), ::MAX_EVENTS, -1);
@@ -57,18 +57,19 @@ void NetDev::loop() {
                 std::cerr << "epoll event error\n";
                 close(events[i].data.fd);
             } else if (events[i].data.fd == tapd->fd()) {
-                ssize_t nread = tapd->read(pkb->data, MTU);
+                ssize_t nread = tapd->read(pkb.data, MTU);
 
                 if (nread < 0) {
                     perror("Reading from interface");
                     exit(1);
                 }
 
-                pkb->len = nread;
-                pkb->dev_addr = addr;
-                memcpy(pkb->dev_hwaddr, hwaddr, 6);
+                pkb.len = nread;
+                pkb.dev_addr = addr;
+                memcpy(pkb.dev_hwaddr, hwaddr, 6);
 
-                this->notify(*pkb);
+                this->notify(pkb);
+                memset(&pkb,0, sizeof(pkb));
                 
             }
         }
@@ -78,9 +79,6 @@ void NetDev::loop() {
 
 NetDev::~NetDev() {
     close(epoll_fd);
-    delete pkb;
-
-
 }
 
 

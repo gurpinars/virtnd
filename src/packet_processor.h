@@ -7,7 +7,7 @@
 #include "observer.hpp"
 #include "pk_buff.h"
 
-class PacketProcessor: public Observer {
+class PacketProcessor: public Observer<pk_buff&&> {
 public:
     PacketProcessor();
     ~PacketProcessor();
