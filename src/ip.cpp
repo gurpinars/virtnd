@@ -32,8 +32,8 @@ IP *IP::instance() {
     return &ins;
 }
 
-void IP::recv(pk_buff *pkb) {
-    auto eth = eth_hdr(pkb->data);
+void IP::recv(pk_buff &&pkb) {
+    auto eth = eth_hdr(pkb.data);
     auto iph = ip_hdr(eth);
 
     if (iph->version != IPv4) {
@@ -41,7 +41,7 @@ void IP::recv(pk_buff *pkb) {
         return;
     }
 
-    if (pkb->len < sizeof(eth_frame) + sizeof(iphdr)) {
+    if (pkb.len < sizeof(eth_frame) + sizeof(iphdr)) {
         std::cerr << "IPv4 packet is too small";
         return;
     }
@@ -58,7 +58,7 @@ void IP::recv(pk_buff *pkb) {
 
     if (iph->ttl == 0) {
         std::cerr << "Ip TTL is 0\n";
-        icmp->send(pkb, TIME_EXCEEDED, 0x00);
+        icmp->send(std::move(pkb), TIME_EXCEEDED, 0x00);
         return;
     }
 
@@ -76,29 +76,25 @@ void IP::recv(pk_buff *pkb) {
     if (iph->ihl > 5)
         check_opts(iph);
 
-    auto rt = route->lookup(iph->daddr);
-    pkb->rtdst = rt;
+    auto &&rt = route->lookup(iph->daddr);
+    pkb.rtdst = std::move(rt);
 
     // Is this packet for us
-    if (rt.flags & RT_HOST) {
+    if (pkb.rtdst.m_flags & RT_HOST) {
         switch (iph->pro) {
             case ICMPv4:
-                icmp->recv(pkb);
-                break;
-            case IP_TCP:
-                break;
-            case IP_UDP:
+                icmp->recv(std::move(pkb));
                 break;
             default:
                 break;
         }
     } else
-        forward(pkb);
+        forward(std::move(pkb));
 
 }
 
-void IP::send(pk_buff *pkb, uint8_t pro) {
-    auto eth = eth_hdr(pkb->data);
+void IP::send(pk_buff &&pkb, uint8_t pro) {
+    auto eth = eth_hdr(pkb.data);
     auto iph = ip_hdr(eth);
 
     // fill header info
@@ -115,25 +111,25 @@ void IP::send(pk_buff *pkb, uint8_t pro) {
     iph->daddr ^= iph->saddr;
     iph->saddr ^= iph->daddr;
 
-    if (pkb->rtdst.flags & RT_LOOPBACK) {
+    if (pkb.rtdst.m_flags & RT_LOOPBACK) {
         std::cout << "To loopback\n";
-        send_out(pkb, pkb->dev_hwaddr);
+        send_out(std::move(pkb), pkb.dev_hwaddr);
         return;
     }
 
-    if (pkb->rtdst.flags & RT_GATEWAY)
-        iph->daddr = pkb->rtdst.gateway;
+    if (pkb.rtdst.m_flags & RT_GATEWAY)
+        iph->daddr = pkb.rtdst.m_gateway;
 
     auto found = arp->cache_lookup(iph->daddr);
     if (found)
-        send_out(pkb, found.hwaddr);
-    else arp->request(pkb, iph->saddr, iph->daddr);
+        send_out(std::move(pkb), found.hwaddr);
+    else arp->request(std::move(pkb), iph->saddr, iph->daddr);
 
 }
 
 
-void IP::forward(pk_buff *pkb) {
-    auto eth = eth_hdr(pkb->data);
+void IP::forward(pk_buff &&pkb) {
+    auto eth = eth_hdr(pkb.data);
     auto iph = ip_hdr(eth);
 
     iph->saddr = htonl(iph->saddr);
@@ -141,23 +137,23 @@ void IP::forward(pk_buff *pkb) {
     iph->len = htons(iph->len);
 
     if (iph->ttl <= 1) {
-        icmp->send(pkb, TIME_EXCEEDED, 0x00);
+        icmp->send(std::move(pkb), TIME_EXCEEDED, 0x00);
         return;
     }
 
     iph->ttl--;
 
-    if ((pkb->rtdst.flags & RT_GATEWAY) || pkb->rtdst.metric > 0)
-        iph->daddr = pkb->rtdst.gateway;
+    if ((pkb.rtdst.m_flags & RT_GATEWAY) || pkb.rtdst.m_metric > 0)
+        iph->daddr = pkb.rtdst.m_gateway;
 
     std::cout << "Forwarding\n";
-    send(pkb, iph->pro);
+    send(std::move(pkb), iph->pro);
 
 }
 
 
-void IP::send_out(pk_buff *pkb, uint8_t *hwaddr) {
-    auto eth = eth_hdr(pkb->data);
+void IP::send_out(pk_buff &&pkb, uint8_t *hwaddr) {
+    auto eth = eth_hdr(pkb.data);
     auto iph = ip_hdr(eth);
 
     iph->len = htons(iph->len);
@@ -166,7 +162,7 @@ void IP::send_out(pk_buff *pkb, uint8_t *hwaddr) {
     iph->fragoff = htons(iph->fragoff);
 
     iph->cksum = checksum(iph, IP_HDR_SZ(iph));
-    ethn->xmit(pkb, hwaddr, pkb->dev_hwaddr, pkb->len, ETH_P_IP);
+    ethn->xmit(std::move(pkb), hwaddr, pkb.dev_hwaddr, pkb.len, ETH_P_IP);
 }
 
 

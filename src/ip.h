@@ -37,13 +37,13 @@ public:
     static IP *instance();
     IP(const IP &) = delete;
     IP &operator=(const IP &)= delete;
-    void recv(pk_buff *);
-    void send(pk_buff *, uint8_t);
+    void recv(pk_buff &&);
+    void send(pk_buff &&, uint8_t);
 
 private:
     IP() {};
-    void forward(pk_buff *);
-    void send_out(pk_buff *, uint8_t *);
+    void forward(pk_buff &&);
+    void send_out(pk_buff &&, uint8_t *);
     void check_opts(iphdr *);
 
 };

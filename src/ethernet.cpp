@@ -9,18 +9,18 @@ ETH *ETH::instance() {
     return &ins;
 }
 
-void ETH::xmit(pk_buff *pkb,
+void ETH::xmit(pk_buff &&pkb,
                const uint8_t *dst_hwaddr,
                const uint8_t *hwaddr,
                ssize_t len,
                uint16_t type) {
 
-    auto eth = eth_hdr(pkb->data);
+    auto eth = eth_hdr(pkb.data);
     eth->type = htons(type);
     memcpy(eth->dmac, dst_hwaddr, 6);
     memcpy(eth->smac, hwaddr, 6);
 
-    tapd->write(pkb->data, len);
+    tapd->write(pkb.data, len);
 
 }
 

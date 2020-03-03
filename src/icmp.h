@@ -16,8 +16,8 @@ public:
     static ICMP *instance();
     ICMP(const ICMP &) = delete;
     ICMP &operator=(const ICMP &)= delete;
-    void recv(pk_buff *);
-    void send(pk_buff *, uint8_t, uint8_t);
+    void recv(pk_buff &&);
+    void send(pk_buff &&, uint8_t, uint8_t);
 
 private:
     ICMP() {};

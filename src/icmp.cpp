@@ -21,8 +21,8 @@ ICMP *ICMP::instance() {
 }
 
 
-void ICMP::recv(pk_buff *pkb) {
-    auto eth = eth_hdr(pkb->data);
+void ICMP::recv(pk_buff &&pkb) {
+    auto eth = eth_hdr(pkb.data);
     auto iph = ip_hdr(eth);
     auto icmph = icmp_hdr(iph);
 
@@ -37,7 +37,7 @@ void ICMP::recv(pk_buff *pkb) {
     switch (icmph->type) {
         case ECHO_REQUEST:
             std::cout << "ICMP ECHO REQUEST message received\n";
-            send(pkb, ECHO_REPLY, 0x00);
+            send(std::move(pkb), ECHO_REPLY, 0x00);
             break;
         case ECHO_REPLY:
             std::cout << "ICMP ECHO REPLY message received\n";
@@ -55,8 +55,8 @@ void ICMP::recv(pk_buff *pkb) {
 }
 
 
-void ICMP::send(pk_buff *pkb, uint8_t type, uint8_t code) {
-    auto eth = eth_hdr(pkb->data);
+void ICMP::send(pk_buff &&pkb, uint8_t type, uint8_t code) {
+    auto eth = eth_hdr(pkb.data);
     auto iph = ip_hdr(eth);
     auto icmph = icmp_hdr(iph);
 
@@ -81,14 +81,14 @@ void ICMP::send(pk_buff *pkb, uint8_t type, uint8_t code) {
         memcpy(ptr + 4 + IP_HDR_SZ(iph), f64, 8);
 
         iph->saddr = ntohl(iph->saddr);
-        iph->daddr = pkb->dev_addr;
+        iph->daddr = pkb.dev_addr;
         iph->len = ntohs(iph->len);
     }
 
     int icmp_len = iph->len - MIN_IP_HDR_SZ;
     icmph->cksum = checksum(icmph, icmp_len);
 
-    ip->send(pkb, ICMPv4);
+    ip->send(std::move(pkb), ICMPv4);
 
 }
 

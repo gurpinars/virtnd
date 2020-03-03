@@ -36,11 +36,11 @@ ARP::~ARP() {
     ct.tid.join();
 }
 
-void ARP::recv(pk_buff *pkb) {
-    auto eth = eth_hdr(pkb->data);
+void ARP::recv(pk_buff &&pkb) {
+    auto eth = eth_hdr(pkb.data);
     auto arph = arp_hdr(eth);
 
-    if (pkb->len < sizeof(eth_frame) + sizeof(arphdr)) {
+    if (pkb.len < sizeof(eth_frame) + sizeof(arphdr)) {
         std::cerr << "ARP packet is too small\n";
         return;
     }
@@ -68,7 +68,7 @@ void ARP::recv(pk_buff *pkb) {
         merge = true;
     }
 
-    if (pkb->dev_addr == arph->tpa) {
+    if (pkb.dev_addr == arph->tpa) {
         if (!merge)
             cache_ent_create(arph->spa, arph->pro, arph->sha);
     } else
@@ -77,7 +77,7 @@ void ARP::recv(pk_buff *pkb) {
     switch (arph->op) {
         case ARP_REQUEST:
             std::cout << "Got 1 ARP Request\n";
-            reply(pkb);
+            reply(std::move(pkb));
             break;
         default:
             break;
@@ -85,8 +85,8 @@ void ARP::recv(pk_buff *pkb) {
 
 }
 
-void ARP::reply(pk_buff *pkb) {
-    auto eth = eth_hdr(pkb->data);
+void ARP::reply(pk_buff &&pkb) {
+    auto eth = eth_hdr(pkb.data);
     auto arph = arp_hdr(eth);
 
     memcpy(arph->tha, arph->sha, 6);
@@ -94,8 +94,8 @@ void ARP::reply(pk_buff *pkb) {
 
     eth->type = htons(eth->type);
 
-    memcpy(arph->sha, pkb->dev_hwaddr, 6);
-    arph->spa = htonl(pkb->dev_addr);
+    memcpy(arph->sha, pkb.dev_hwaddr, 6);
+    arph->spa = htonl(pkb.dev_addr);
 
     arph->op = ARP_REPLY;
     arph->op = htons(arph->op);
@@ -103,16 +103,16 @@ void ARP::reply(pk_buff *pkb) {
     arph->hrd = htons(arph->hrd);
     arph->pro = htons(arph->pro);
 
-    ethn->xmit(pkb, arph->tha, arph->sha, pkb->len, ETH_P_ARP);
+    ethn->xmit(std::move(pkb), arph->tha, arph->sha, pkb.len, ETH_P_ARP);
 
 
 }
 
-void ARP::request(pk_buff *pkb, uint32_t addr, uint32_t tpa) {
-    auto eth = eth_hdr(pkb->data);
+void ARP::request(pk_buff &&pkb, uint32_t addr, uint32_t tpa) {
+    auto eth = eth_hdr(pkb.data);
     auto arph = arp_hdr(eth);
 
-    memcpy(arph->sha, pkb->dev_hwaddr, 6);
+    memcpy(arph->sha, pkb.dev_hwaddr, 6);
     arph->spa = addr;
 
     memcpy(arph->tha, hwbroadcast, 6);
@@ -130,7 +130,7 @@ void ARP::request(pk_buff *pkb, uint32_t addr, uint32_t tpa) {
 
     size_t len = sizeof(struct arphdr) + sizeof(struct eth_frame);
 
-    ethn->xmit(pkb, arph->tha, arph->sha, len, ETH_P_ARP);
+    ethn->xmit(std::move(pkb), arph->tha, arph->sha, len, ETH_P_ARP);
 
 }
 

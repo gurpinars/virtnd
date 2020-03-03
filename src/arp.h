@@ -27,14 +27,14 @@ public:
     static ARP *instance();
     ARP(const ARP &) = delete;
     ARP &operator=(const ARP &)= delete;
-    void recv(pk_buff *);
-    void request(pk_buff *, uint32_t, uint32_t);
+    void recv(pk_buff &&);
+    void request(pk_buff &&, uint32_t, uint32_t);
     arp_cache cache_lookup(uint32_t);
 
 private:
     explicit ARP();
     ~ARP();
-    void reply(pk_buff *);
+    void reply(pk_buff &&);
     void cache_update(uint32_t, uint8_t *);
     void cache_ent_create(uint32_t, uint16_t, uint8_t *);
 
