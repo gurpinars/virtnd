@@ -26,7 +26,7 @@ void PacketProcessor::worker() {
             continue;
 
         mutex.lock();
-        auto &&pkb = pkt_queue.front();
+        pk_buff pkb = pkt_queue.front();
         pkt_queue.pop();
         mutex.unlock();
 

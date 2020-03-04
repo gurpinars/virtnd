@@ -76,10 +76,10 @@ void IP::recv(pk_buff &&pkb) {
     if (iph->ihl > 5)
         check_opts(iph);
 
-    auto &&rt = route->lookup(iph->daddr);
+    rtentry rt = route->lookup(iph->daddr);
     pkb.rtdst = std::move(rt);
 
-    // Is this packet for us
+    /* Is this packet for us */
     if (pkb.rtdst.m_flags & RT_HOST) {
         switch (iph->pro) {
             case ICMPv4:
