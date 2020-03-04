@@ -8,6 +8,13 @@ static constexpr uint32_t MTU = 1500;
 
 typedef struct pk_buff_t {
     pk_buff_t() = default;
+    pk_buff_t(const pk_buff_t &other) {
+        len = other.len;
+        dev_addr = other.dev_addr;
+        memcpy(data, other.data, MTU);
+        memcpy(dev_hwaddr, other.dev_hwaddr, 6);
+        rtdst = other.rtdst;
+    }
 
     pk_buff_t(pk_buff_t &&other) noexcept {
         len = other.len;

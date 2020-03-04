@@ -18,6 +18,27 @@ struct rtentry {
             m_flags(flags),
             m_metric(metric) {}
 
+    rtentry(const rtentry &other) {
+        m_dst = other.m_dst;
+        m_gateway = other.m_gateway;
+        m_netmask = other.m_netmask;
+        m_flags = other.m_flags;
+        m_metric = other.m_metric;
+    }
+
+    rtentry &operator=(const rtentry &other) noexcept {
+        if (this != &other) {
+            m_dst = other.m_dst;
+            m_gateway = other.m_gateway;
+            m_netmask = other.m_netmask;
+            m_flags = other.m_flags;
+            m_metric = other.m_metric;
+        }
+
+        return *this;
+
+    }
+
     rtentry(rtentry &&other) noexcept {
         m_dst = other.m_dst;
         m_gateway = other.m_gateway;
