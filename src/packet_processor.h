@@ -5,6 +5,7 @@
 #include <mutex>
 #include <queue>
 #include "observer.hpp"
+#include "concurrent_queue.hpp"
 #include "pk_buff.h"
 
 class PacketProcessor: public Observer<pk_buff&&> {
@@ -18,7 +19,7 @@ private:
     std::thread m_thread;   /* Thread */
     std::mutex mutex;       /* Data mutex */
     bool stop;
-    std::queue<pk_buff> pkt_queue;
+    concurrent_queue<pk_buff> pkt_queue;
 
 };
 

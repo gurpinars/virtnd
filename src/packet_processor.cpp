@@ -10,12 +10,12 @@ PacketProcessor::PacketProcessor() :
         m_thread([this]() { this->worker(); }) {}
 
 PacketProcessor::~PacketProcessor() {
+    std::lock_guard<std::mutex> lockg(mutex);
     stop = true;
     m_thread.join();
 }
 
 void PacketProcessor::update(pk_buff pkt) {
-    std::lock_guard<std::mutex> lockg(mutex);
     pkt_queue.push(std::move(pkt));
 
 }
@@ -25,10 +25,8 @@ void PacketProcessor::worker() {
         if (pkt_queue.empty())
             continue;
 
-        mutex.lock();
-        pk_buff pkb = pkt_queue.front();
-        pkt_queue.pop();
-        mutex.unlock();
+        pk_buff pkb;
+        pkt_queue.wait_and_pop(pkb);
 
         auto *eth = eth_hdr(pkb.data);
         eth->type = htons(eth->type);
