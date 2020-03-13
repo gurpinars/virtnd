@@ -9,7 +9,7 @@ template<typename T>
 class concurrent_queue {
 public:
     void push(T data) {
-        std::unique_lock<std::mutex> lockq(mtx);
+        std::unique_lock<std::mutex> lockq{mtx};
         m_queue.push(std::move(data));
 
         lockq.unlock();
@@ -17,12 +17,12 @@ public:
     }
 
     bool empty() const {
-        std::lock_guard<std::mutex> lockg(mtx);
+        std::lock_guard<std::mutex> lockg{mtx};
         return m_queue.empty();
     }
 
     bool try_pop(T &popped) {
-        std::unique_lock<std::mutex> lockq(mtx);
+        std::unique_lock<std::mutex> lockq{mtx};
         if (m_queue.empty())
             return false;
 
@@ -37,7 +37,7 @@ public:
     }
 
     void wait_and_pop(T &popped) {
-        std::unique_lock<std::mutex> lockq(mtx);
+        std::unique_lock<std::mutex> lockq{mtx};
         while (m_queue.empty())
             cv.wait(lockq);
 
