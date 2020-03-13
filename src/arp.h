@@ -5,12 +5,41 @@
 #include <map>
 #include <thread>
 #include <mutex>
+#include "concurrent_map.hpp"
 #include "ethernet.h"
 #include "pk_buff.h"
 
 
 struct arp_cache {
-    arp_cache();
+    arp_cache():pro(0),time(0) {
+        memset(hwaddr, 0, 6);
+    }
+
+    arp_cache(const arp_cache &other) {
+        memcpy(hwaddr,other.hwaddr,6);
+        pro=other.pro;
+        time=other.time;
+    }
+
+    arp_cache &operator=(const arp_cache &other) {
+        if (this != &other) {
+            memcpy(hwaddr, other.hwaddr, 6);
+            pro = other.pro;
+            time = other.time;
+        }
+
+        return *this;
+    }
+
+    arp_cache(arp_cache &&other) noexcept {
+        memcpy(hwaddr,other.hwaddr,6);
+        pro=other.pro;
+        time=other.time;
+
+        memset(other.hwaddr,0,6);
+        other.pro=0;
+        other.time=0;
+    }
     explicit operator bool() const {
         return (hwaddr[0] != 0 || hwaddr[1] != 0 || hwaddr[2] != 0 ||
                 hwaddr[3] != 0 || hwaddr[4] != 0 || hwaddr[5] != 0);
@@ -52,13 +81,12 @@ private:
 
     typedef struct {
         std::thread tid;   /* Thread */
-        std::mutex mutex;  /* Data mutex */
         int timeout;
         bool stop;
     } cache_timer;
 
     cache_timer ct{};
-    std::map<uint32_t, arp_cache> trans_table;  /* Translation table */
+    concurrent_map<uint32_t, arp_cache> trans_table;  /* Translation table */
 
     inline struct arphdr *arp_hdr(eth_frame *eth) {
         return reinterpret_cast<arphdr *>(eth->payload);

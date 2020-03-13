@@ -28,7 +28,7 @@ ARP *ARP::instance() {
 ARP::ARP() {
     ct.stop = false;
     ct.timeout = 5;
-    ct.tid=std::thread(&ARP::check_trans_table, this);
+    ct.tid = std::thread(&ARP::check_trans_table, this);
 }
 
 ARP::~ARP() {
@@ -142,51 +142,36 @@ void ARP::check_trans_table(void *contex) {
         time_t now;
         now = time(nullptr);
 
-        ctx->ct.mutex.lock();
-
-        for (auto it=ctx->trans_table.cbegin();it != ctx->trans_table.cend();) {
+        for (auto it = ctx->trans_table.cbegin(); it != ctx->trans_table.cend();) {
             if (difftime(now, it->second.time) > ctx->ct.timeout) {
                 ctx->trans_table.erase(it++);
-            } 
-            else ++it; 
+            } else ++it;
         }
-        ctx->ct.mutex.unlock();
 
     }
 }
 
 
 arp_cache ARP::cache_lookup(uint32_t addr) {
-    std::lock_guard<std::mutex> lockg(ct.mutex);
-
     auto found = trans_table.find(addr);
-    if (found != trans_table.end()) {
-        return found->second;
-    }
+    if(found)
+        return found;
     return {};
-
 }
 
 void ARP::cache_update(uint32_t addr, uint8_t *sha) {
-    std::lock_guard<std::mutex> lockg(ct.mutex);
-
-    memcpy(trans_table[addr].hwaddr, sha, 6);
-    trans_table[addr].time = time(nullptr);
-
+    arp_cache cache{};
+    memcpy(cache.hwaddr, sha, 6);
+    cache.time = time(nullptr);
+    trans_table.update(addr, std::move(cache));
 }
 
 void ARP::cache_ent_create(uint32_t addr, uint16_t pro, uint8_t *sha) {
-    std::lock_guard<std::mutex> lockg(ct.mutex);
-
     arp_cache cache{};
     cache.pro = pro;
     cache.time = time(nullptr);
     memcpy(cache.hwaddr, sha, 6);
-    trans_table[addr] = cache;
-}
-
-arp_cache::arp_cache():pro(0),time(0) {
-    memset(hwaddr,0,6);
+    trans_table.insert(addr, std::move(cache));
 }
 
 ARP *arp = ARP::instance();
