@@ -32,6 +32,7 @@ ARP::ARP() {
 }
 
 ARP::~ARP() {
+    std::lock_guard<std::mutex> lockg(ct.mutex);
     ct.stop = true;
     ct.tid.join();
 }

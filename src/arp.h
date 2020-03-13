@@ -81,6 +81,7 @@ private:
 
     typedef struct {
         std::thread tid;   /* Thread */
+        std::mutex mutex;
         int timeout;
         bool stop;
     } cache_timer;
