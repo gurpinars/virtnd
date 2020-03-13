@@ -1,5 +1,5 @@
-#ifndef VIRTND_OBSERVER_HPP
-#define VIRTND_OBSERVER_HPP
+#pragma once
+
 #include <vector>
 #include "pk_buff.h"
 
@@ -28,8 +28,3 @@ private:
     std::vector<Observer<T>*> m_observers;
 };
 
-
-
-
-
-#endif

@@ -1,5 +1,4 @@
-#ifndef VIRTND_CONCURRENT_QUEUE_HPP
-#define VIRTND_CONCURRENT_QUEUE_HPP
+#pragma once
 
 #include <mutex>
 #include <condition_variable>
@@ -53,5 +52,3 @@ private:
     std::queue<T> m_queue;
 
 };
-
-#endif //VIRTND_CONCURRENT_QUEUE_HPP
