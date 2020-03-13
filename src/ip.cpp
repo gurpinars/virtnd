@@ -180,7 +180,7 @@ void IP::check_opts(iphdr *iph) {
                 auto dst1 = std::bitset<8>(dst[1]).to_string();
                 auto dst2 = std::bitset<8>(dst[2]).to_string();
                 auto dst3 = std::bitset<8>(dst[3]).to_string();
-                auto bf = dst0 + dst1 + dst2 + dst3;
+                auto bf = dst0.append(dst1).append(dst2).append(dst3);
 
                 iph->daddr = std::bitset<32>(bf).to_ulong();
                 break;
