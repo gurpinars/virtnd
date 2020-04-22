@@ -3,8 +3,7 @@
 #include <netinet/in.h>
 #include "ip.h"
 #include "icmp.h"
-#include "utils.h"
-#include "arp.h"
+#include "../utility/utils.h"
 #include "pk_buff.h"
 
 /*
@@ -12,7 +11,7 @@
  * https://tools.ietf.org/html/rfc792
  */
 
-#define ALLOC_ICMP_PKB(iph) (reinterpret_cast<icmp *>((iph)->data))
+#define ICMP_PKB(iph) (reinterpret_cast<icmp *>((iph)->data))
 
 
 ICMP *ICMP::instance() {
@@ -68,7 +67,7 @@ void ICMP::send(pk_buff &&pkb, uint8_t type, uint8_t code) {
     uint8_t iphdr[IP_HDR_SZ(iph)];
     memcpy(iphdr, iph, IP_HDR_SZ(iph));
 
-    icmph = ALLOC_ICMP_PKB(iph);
+    icmph = ICMP_PKB(iph);
     icmph->type = type;
     icmph->code = code;
     icmph->cksum = 0;

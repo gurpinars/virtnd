@@ -4,9 +4,9 @@
 #include <thread>
 #include <mutex>
 #include <queue>
-#include "observer.hpp"
-#include "concurrent_queue.hpp"
-#include "pk_buff.h"
+#include "utility/observer.hpp"
+#include "utility/concurrent_queue.hpp"
+#include "stack/pk_buff.h"
 
 class PacketProcessor: public Observer<pk_buff&&> {
 public:

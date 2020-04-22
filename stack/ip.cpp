@@ -2,8 +2,7 @@
 #include <netinet/in.h>
 #include <cstring>
 #include <bitset>
-#include <arpa/inet.h>
-#include "utils.h"
+#include "../utility/utils.h"
 #include "ip.h"
 #include "ethernet.h"
 #include "icmp.h"

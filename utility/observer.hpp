@@ -1,7 +1,6 @@
 #pragma once
 
 #include <vector>
-#include "pk_buff.h"
 
 template <typename T, bool is_rvalue=std::is_rvalue_reference<T>::value>
 class Observer {

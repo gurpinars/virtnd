@@ -1,8 +1,6 @@
 #include <iostream>
 #include <cstring>
-#include <unistd.h>
 #include <netinet/in.h>
-#include <arpa/inet.h>
 #include "ethernet.h"
 #include "arp.h"
 #include "pk_buff.h"

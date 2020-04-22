@@ -2,9 +2,9 @@
 #include <cstring>
 #include <array>
 #include "netdev.h"
-#include "utils.h"
-#include "tap.h"
-#include "pk_buff.h"
+#include "utility/utils.h"
+#include "stack/tap.h"
+#include "stack/pk_buff.h"
 
 static constexpr int MAX_EVENTS = 32;
 

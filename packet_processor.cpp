@@ -1,8 +1,8 @@
 #include <netinet/in.h>
 #include "packet_processor.h"
-#include "ethernet.h"
-#include "arp.h"
-#include "ip.h"
+#include "stack/ethernet.h"
+#include "stack/arp.h"
+#include "stack/ip.h"
 
 
 PacketProcessor::PacketProcessor() :

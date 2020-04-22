@@ -3,8 +3,8 @@
 
 #include <cstdint>
 #include <unistd.h>
-#include "pk_buff.h"
-#include "observer.hpp"
+#include "stack/pk_buff.h"
+#include "utility/observer.hpp"
 
 
 class NetDev: public Subject<pk_buff&&> {
@@ -15,7 +15,7 @@ public:
 
 private:
     uint32_t addr;
-    uint8_t hwaddr[6];
+    uint8_t hwaddr[6]{};
     int epoll_fd;
 
 };
