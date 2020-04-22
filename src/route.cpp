@@ -19,10 +19,5 @@ rtentry &ROUTE::lookup(uint32_t daddr) {
         if ((daddr & r.m_netmask) == (r.m_dst & r.m_netmask))
             return r;
     }
-
 }
-
-
-ROUTE *route = ROUTE::instance();
-
 

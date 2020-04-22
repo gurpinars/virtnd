@@ -49,5 +49,6 @@ private:
 };
 
 
-extern IP *ip;
+#define _IP() IP::instance()
+
 #endif //VIRTND_IP_H

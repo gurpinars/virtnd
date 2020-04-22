@@ -33,10 +33,10 @@ void PacketProcessor::worker() {
 
         switch (eth->type) {
             case ETH_P_ARP:
-                arp->recv(std::move(pkb));
+                _ARP()->recv(std::move(pkb));
                 break;
             case ETH_P_IP:
-                ip->recv(std::move(pkb));
+                _IP()->recv(std::move(pkb));
                 break;
             default:
                 break;

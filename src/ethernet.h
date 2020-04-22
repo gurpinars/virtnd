@@ -30,6 +30,6 @@ inline struct eth_frame *eth_hdr(void *buf) {
     return reinterpret_cast<eth_frame *>(buf);
 }
 
-extern ETH *ethn;
+#define _ETH() ETH::instance()
 
 #endif //VIRTND_ETHERNET_H

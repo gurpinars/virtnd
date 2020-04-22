@@ -98,5 +98,5 @@ private:
 
 };
 
-extern ROUTE *route;
+#define _ROUTE() ROUTE::instance()
 #endif //VIRTND_ROUTE_H

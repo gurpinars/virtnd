@@ -38,5 +38,5 @@ private:
 };
 
 
-extern ICMP *icmp;
+#define _ICMP() ICMP::instance()
 #endif //VIRTND_ICMP_H

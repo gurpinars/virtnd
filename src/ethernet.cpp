@@ -20,8 +20,6 @@ void ETH::xmit(pk_buff &&pkb,
     memcpy(eth->dmac, dst_hwaddr, 6);
     memcpy(eth->smac, hwaddr, 6);
 
-    tapd->write(pkb.data, len);
+    _TAPD()->write(pkb.data, len);
 
 }
-
-ETH *ethn = ETH::instance();

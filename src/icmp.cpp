@@ -88,8 +88,6 @@ void ICMP::send(pk_buff &&pkb, uint8_t type, uint8_t code) {
     int icmp_len = iph->len - MIN_IP_HDR_SZ;
     icmph->cksum = checksum(icmph, icmp_len);
 
-    ip->send(std::move(pkb), ICMPv4);
+    _IP()->send(std::move(pkb), ICMPv4);
 
 }
-
-ICMP *icmp = ICMP::instance();

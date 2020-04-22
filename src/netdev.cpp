@@ -31,10 +31,10 @@ NetDev::NetDev(const char *addr, const char *hwaddr) :
 
     struct epoll_event event{};
     memset(&event, 0, sizeof(event));
-    event.data.fd = tapd->fd();
+    event.data.fd = _TAPD()->fd();
     event.events = EPOLLIN;
 
-    if (epoll_ctl(epoll_fd, EPOLL_CTL_ADD, tapd->fd(), &event) < 0) {
+    if (epoll_ctl(epoll_fd, EPOLL_CTL_ADD, _TAPD()->fd(), &event) < 0) {
         perror("epoll_ctl()");
         close(epoll_fd);
         exit(EXIT_FAILURE);
@@ -58,9 +58,9 @@ void NetDev::loop() {
 
                 std::cerr << "epoll event error\n";
                 close(events[i].data.fd);
-            } else if (events[i].data.fd == tapd->fd()) {
+            } else if (events[i].data.fd == _TAPD()->fd()) {
                 pk_buff pkb{};
-                ssize_t nread = tapd->read(pkb.data, MTU);
+                ssize_t nread = _TAPD()->read(pkb.data, MTU);
 
                 if (nread < 0) {
                     perror("Reading from interface");

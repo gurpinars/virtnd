@@ -58,7 +58,7 @@ void IP::recv(pk_buff &&pkb) {
 
     if (iph->ttl == 0) {
         std::cerr << "Ip TTL is 0\n";
-        icmp->send(std::move(pkb), TIME_EXCEEDED, 0x00);
+        _ICMP()->send(std::move(pkb), TIME_EXCEEDED, 0x00);
         return;
     }
 
@@ -76,14 +76,14 @@ void IP::recv(pk_buff &&pkb) {
     if (iph->ihl > 5)
         check_opts(iph);
 
-    rtentry rt = route->lookup(iph->daddr);
+    rtentry rt = _ROUTE()->lookup(iph->daddr);
     pkb.rtdst = std::move(rt);
 
     /* Is this packet for us */
     if (pkb.rtdst.m_flags & RT_HOST) {
         switch (iph->pro) {
             case ICMPv4:
-                icmp->recv(std::move(pkb));
+                _ICMP()->recv(std::move(pkb));
                 break;
             default:
                 break;
@@ -120,10 +120,10 @@ void IP::send(pk_buff &&pkb, uint8_t pro) {
     if (pkb.rtdst.m_flags & RT_GATEWAY)
         iph->daddr = pkb.rtdst.m_gateway;
 
-    auto found = arp->cache_lookup(iph->daddr);
+    auto found = _ARP()->cache_lookup(iph->daddr);
     if (found)
         send_out(std::move(pkb), found.hwaddr);
-    else arp->request(std::move(pkb), iph->saddr, iph->daddr);
+    else _ARP()->request(std::move(pkb), iph->saddr, iph->daddr);
 
 }
 
@@ -137,7 +137,7 @@ void IP::forward(pk_buff &&pkb) {
     iph->len = htons(iph->len);
 
     if (iph->ttl <= 1) {
-        icmp->send(std::move(pkb), TIME_EXCEEDED, 0x00);
+        _ICMP()->send(std::move(pkb), TIME_EXCEEDED, 0x00);
         return;
     }
 
@@ -162,7 +162,7 @@ void IP::send_out(pk_buff &&pkb, uint8_t *hwaddr) {
     iph->fragoff = htons(iph->fragoff);
 
     iph->cksum = checksum(iph, IP_HDR_SZ(iph));
-    ethn->xmit(std::move(pkb), hwaddr, pkb.dev_hwaddr, pkb.len, ETH_P_IP);
+    _ETH()->xmit(std::move(pkb), hwaddr, pkb.dev_hwaddr, pkb.len, ETH_P_IP);
 }
 
 
@@ -197,7 +197,4 @@ void IP::check_opts(iphdr *iph) {
         }
     }
 }
-
-IP *ip = IP::instance();
-
 

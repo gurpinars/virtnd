@@ -97,5 +97,6 @@ private:
 
 };
 
-extern ARP *arp;
+#define _ARP() ARP::instance()
+
 #endif //VIRTND_ARP_H

@@ -90,7 +90,6 @@ void TAPDev::set_iff_route(std::string &dev) {
     system(ss.str().c_str());
 }
 
-TAPDev *tapd = TAPDev::instance();
 
 
 

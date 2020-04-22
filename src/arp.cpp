@@ -104,7 +104,7 @@ void ARP::reply(pk_buff &&pkb) {
     arph->hrd = htons(arph->hrd);
     arph->pro = htons(arph->pro);
 
-    ethn->xmit(std::move(pkb), arph->tha, arph->sha, pkb.len, ETH_P_ARP);
+    _ETH()->xmit(std::move(pkb), arph->tha, arph->sha, pkb.len, ETH_P_ARP);
 
 
 }
@@ -131,7 +131,7 @@ void ARP::request(pk_buff &&pkb, uint32_t addr, uint32_t tpa) {
 
     size_t len = sizeof(struct arphdr) + sizeof(struct eth_frame);
 
-    ethn->xmit(std::move(pkb), arph->tha, arph->sha, len, ETH_P_ARP);
+    _ETH()->xmit(std::move(pkb), arph->tha, arph->sha, len, ETH_P_ARP);
 
 }
 
@@ -174,6 +174,4 @@ void ARP::cache_ent_create(uint32_t addr, uint16_t pro, uint8_t *sha) {
     memcpy(cache.hwaddr, sha, 6);
     trans_table.insert(addr, std::move(cache));
 }
-
-ARP *arp = ARP::instance();
 
