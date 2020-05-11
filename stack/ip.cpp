@@ -2,7 +2,6 @@
 #include <netinet/in.h>
 #include <cstring>
 #include <bitset>
-#include "../utility/utils.h"
 #include "ip.h"
 #include "ethernet.h"
 #include "icmp.h"
@@ -16,6 +15,8 @@
 
 
 /* IP Options */
+namespace IPOptions {
+
 static constexpr uint8_t EOOL = 0x0;
 static constexpr uint8_t NOP = 0x1;
 static constexpr uint8_t SEC = 0x82;
@@ -24,6 +25,8 @@ static constexpr uint8_t SSRR = 0x89;
 static constexpr uint8_t RR = 0x7;
 static constexpr uint8_t SID = 0x88;
 static constexpr uint8_t TS = 0x44;
+
+}
 
 
 IP *IP::instance() {
@@ -61,7 +64,7 @@ void IP::recv(pk_buff &&pkb) {
         return;
     }
 
-    auto cksum = checksum(iph, IP_HDR_SZ(iph));
+    auto cksum = IPUtils::checksum(iph, IP_HDR_SZ(iph));
     if (cksum != 0) {
         std::cerr << "IP Invalid Checksum\n";
         return;
@@ -160,7 +163,7 @@ void IP::send_out(pk_buff &&pkb, uint8_t *hwaddr) {
     iph->saddr = htonl(iph->saddr);
     iph->fragoff = htons(iph->fragoff);
 
-    iph->cksum = checksum(iph, IP_HDR_SZ(iph));
+    iph->cksum = IPUtils::checksum(iph, IP_HDR_SZ(iph));
     _ETH()->xmit(std::move(pkb), hwaddr, pkb.dev_hwaddr, pkb.len, ETH_P_IP);
 }
 
@@ -170,8 +173,8 @@ void IP::check_opts(iphdr *iph) {
     auto *options = reinterpret_cast<uint8_t *>(iph->data);
 
     for (int i = 0; i < opts_count; ++i) {
-        switch (*(options + i) & 0xff) {
-            case LSRR: {
+        switch (*(options + i) & 0xffu) {
+            case IPOptions::LSRR: {
                 uint8_t dst[4];
                 memcpy(dst, (options + i) + 3, 4);
                 
@@ -184,16 +187,46 @@ void IP::check_opts(iphdr *iph) {
                 iph->daddr = std::bitset<32>(bf).to_ulong();
                 break;
             }
-            case EOOL:
-            case NOP:
-            case SEC:
-            case SSRR:
-            case RR:
-            case SID:
-            case TS:
+            case IPOptions::EOOL:
+            case IPOptions::NOP:
+            case IPOptions::SEC:
+            case IPOptions::SSRR:
+            case IPOptions::RR:
+            case IPOptions::SID:
+            case IPOptions::TS:
             default:
                 break;
         }
     }
+}
+
+namespace IPUtils {
+
+uint16_t checksum(void *addr, int count) {
+
+    /* Compute Internet Checksum for "count" bytes
+     *    beginning at location "addr".
+     *    https://tools.ietf.org/html/rfc1071
+     */
+
+    uint32_t sum = 0;
+
+    auto *ptr_16 = static_cast<uint16_t *>(addr);
+
+    for (; count > 1; count -= 2) {
+        // This is the inner loop
+        sum += *ptr_16++;
+    }
+
+    // Add left-over byte, if any
+    if (count > 0)
+        sum += *static_cast<uint8_t *>(addr);
+
+    // Fold 32-bit sum to 16 bits
+    while (sum >> 16u)
+        sum = (sum & 0xffffu) + (sum >> 16u);
+
+    return ~sum;
+}
 }
 

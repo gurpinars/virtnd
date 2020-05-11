@@ -3,7 +3,6 @@
 #include <netinet/in.h>
 #include "ip.h"
 #include "icmp.h"
-#include "../utility/utils.h"
 #include "pk_buff.h"
 
 /*
@@ -27,7 +26,7 @@ void ICMP::recv(pk_buff &&pkb) {
 
     int icmp_len = iph->len - IP_HDR_SZ(iph);
 
-    auto cksum = checksum(icmph, icmp_len);
+    auto cksum = IPUtils::checksum(icmph, icmp_len);
     if (cksum != 0) {
         std::cerr << "ICMP Invalid Checksum\n";
         return;
@@ -85,7 +84,7 @@ void ICMP::send(pk_buff &&pkb, uint8_t type, uint8_t code) {
     }
 
     int icmp_len = iph->len - MIN_IP_HDR_SZ;
-    icmph->cksum = checksum(icmph, icmp_len);
+    icmph->cksum = IPUtils::checksum(icmph, icmp_len);
 
     _IP()->send(std::move(pkb), ICMPv4);
 

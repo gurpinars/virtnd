@@ -6,16 +6,20 @@
 #include "pk_buff.h"
 
 static constexpr uint8_t IPv4 = 0x04;
-static constexpr uint8_t IP_TCP = 0x06;
-static constexpr uint8_t IP_UDP = 0x11;
 static constexpr uint8_t ICMPv4 = 0x01;
 
 #define MIN_IP_HDR_SZ 20
 #define IP_HDR_SZ(iph) (4 * (iph)->ihl)
 
+namespace IPUtils {
+
+uint16_t checksum(void *addr, int count);
+
+}
+
 struct iphdr {
-    uint8_t ihl:4;          /* Internet Header Length */
-    uint8_t version:4;      /* Version */
+    uint8_t ihl: 4;          /* Internet Header Length */
+    uint8_t version: 4;      /* Version */
     uint8_t tos;            /* Type of Service */
     uint16_t len;           /* Total Length */
     uint16_t id;            /* Identification */
@@ -35,16 +39,23 @@ inline struct iphdr *ip_hdr(struct eth_frame *eth) {
 class IP {
 public:
     static IP *instance();
+
     IP(const IP &) = delete;
-    IP &operator=(const IP &)= delete;
-    void recv(pk_buff &&);
-    void send(pk_buff &&, uint8_t);
+
+    IP &operator=(const IP &) = delete;
+
+    static void recv(pk_buff &&pkb);
+
+    static void send(pk_buff &&pkb, uint8_t pro);
 
 private:
-    IP() {};
-    void forward(pk_buff &&);
-    void send_out(pk_buff &&, uint8_t *);
-    void check_opts(iphdr *);
+    IP() = default;;
+
+    static void forward(pk_buff &&pkb);
+
+    static void send_out(pk_buff &&pkb, uint8_t *hwaddr);
+
+    static void check_opts(iphdr *iph);
 
 };
 
