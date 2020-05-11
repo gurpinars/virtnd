@@ -1,8 +1,8 @@
 #include <iostream>
 #include <cstring>
-#include <netinet/in.h>
 #include "ethernet.h"
 #include "arp.h"
+#include "in.hpp"
 #include "pk_buff.h"
 
 /*
@@ -44,12 +44,11 @@ void ARP::recv(pk_buff &&pkb) {
         return;
     }
 
-
-    arph->hrd = ntohs(arph->hrd);
-    arph->pro = ntohs(arph->pro);
-    arph->op = ntohs(arph->op);
-    arph->tpa = ntohl(arph->tpa);
-    arph->spa = ntohl(arph->spa);
+    arph->hrd = stack::in::ntohs(arph->hrd);
+    arph->pro = stack::in::ntohs(arph->pro);
+    arph->op = stack::in::ntohs(arph->op);
+    arph->tpa = stack::in::ntohl(arph->tpa);
+    arph->spa = stack::in::ntohl(arph->spa);
 
 
     if (arph->hrd != ARP_ETHERNET && arph->hln != 0x06) {
@@ -91,16 +90,16 @@ void ARP::reply(pk_buff &&pkb) {
     memcpy(arph->tha, arph->sha, 6);
     arph->tpa = arph->spa;
 
-    eth->type = htons(eth->type);
+    eth->type = stack::in::htons(eth->type);
 
     memcpy(arph->sha, pkb.dev_hwaddr, 6);
-    arph->spa = htonl(pkb.dev_addr);
+    arph->spa = stack::in::htonl(pkb.dev_addr);
 
     arph->op = ARP_REPLY;
-    arph->op = htons(arph->op);
+    arph->op = stack::in::htons(arph->op);
 
-    arph->hrd = htons(arph->hrd);
-    arph->pro = htons(arph->pro);
+    arph->hrd = stack::in::htons(arph->hrd);
+    arph->pro = stack::in::htons(arph->pro);
 
     _ETH()->xmit(std::move(pkb), arph->tha, arph->sha, pkb.len, ETH_P_ARP);
 
@@ -117,14 +116,14 @@ void ARP::request(pk_buff &&pkb, uint32_t addr, uint32_t tpa) {
     memcpy(arph->tha, hwbroadcast, 6);
     arph->tpa = tpa;
 
-    arph->op = htons(ARP_REQUEST);
-    arph->hrd = htons(ARP_ETHERNET);
-    arph->pro = htons(ARP_IPV4);
+    arph->op = stack::in::htons(ARP_REQUEST);
+    arph->hrd = stack::in::htons(ARP_ETHERNET);
+    arph->pro = stack::in::htons(ARP_IPV4);
     arph->hln = 0x06;
     arph->pln = 0x04;
 
-    arph->spa = htonl(arph->spa);
-    arph->tpa = htonl(arph->tpa);
+    arph->spa = stack::in::htonl(arph->spa);
+    arph->tpa = stack::in::htonl(arph->tpa);
 
 
     size_t len = sizeof(struct arphdr) + sizeof(struct eth_frame);
@@ -151,9 +150,9 @@ void ARP::check_trans_table(void *contex) {
 }
 
 
-arp_cache ARP::cache_lookup(uint32_t addr) {
+ARP::arp_cache ARP::cache_lookup(uint32_t addr) {
     auto found = trans_table.find(addr);
-    if(found)
+    if (found)
         return found;
     return {};
 }

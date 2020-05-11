@@ -60,11 +60,11 @@ int TAPDev::alloc(std::string &dev) {
     return fd;
 }
 
-ssize_t TAPDev::read(void *buf, size_t len) {
+ssize_t TAPDev::read(void *buf, size_t len) const {
     return ::read(tap_fd, buf, len);
 }
 
-ssize_t TAPDev::write(void *buf, size_t len) {
+ssize_t TAPDev::write(void *buf, size_t len) const {
     return ::write(tap_fd, buf, len);
 }
 

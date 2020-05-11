@@ -17,13 +17,19 @@ struct eth_frame {
 class ETH {
 public:
     static ETH *instance();
-    ETH(const ETH &) = delete;
-    ETH &operator=(const ETH &)= delete;
 
-    void xmit(pk_buff &&, const uint8_t*, const uint8_t*, ssize_t, uint16_t);
+    ETH(const ETH &) = delete;
+
+    ETH &operator=(const ETH &) = delete;
+
+    static void xmit(pk_buff &&pkb,
+                     const uint8_t *dst_hwaddr,
+                     const uint8_t *hwaddr,
+                     ssize_t len,
+                     uint16_t type);
 
 private:
-    ETH() {};
+    ETH() = default;;
 };
 
 inline struct eth_frame *eth_hdr(void *buf) {

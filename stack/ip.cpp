@@ -1,11 +1,11 @@
 #include <iostream>
-#include <netinet/in.h>
 #include <cstring>
 #include <bitset>
 #include "ip.h"
 #include "ethernet.h"
 #include "icmp.h"
 #include "arp.h"
+#include "in.hpp"
 #include "pk_buff.h"
 
 /*
@@ -71,9 +71,9 @@ void IP::recv(pk_buff &&pkb) {
     }
 
 
-    iph->saddr = ntohl(iph->saddr);
-    iph->daddr = ntohl(iph->daddr);
-    iph->len = ntohs(iph->len);
+    iph->saddr = stack::in::ntohl(iph->saddr);
+    iph->daddr = stack::in::ntohl(iph->daddr);
+    iph->len = stack::in::ntohs(iph->len);
 
     if (iph->ihl > 5)
         check_opts(iph);
@@ -125,7 +125,8 @@ void IP::send(pk_buff &&pkb, uint8_t pro) {
     auto found = _ARP()->cache_lookup(iph->daddr);
     if (found)
         send_out(std::move(pkb), found.hwaddr);
-    else _ARP()->request(std::move(pkb), iph->saddr, iph->daddr);
+    else
+        _ARP()->request(std::move(pkb), iph->saddr, iph->daddr);
 
 }
 
@@ -134,9 +135,9 @@ void IP::forward(pk_buff &&pkb) {
     auto eth = eth_hdr(pkb.data);
     auto iph = ip_hdr(eth);
 
-    iph->saddr = htonl(iph->saddr);
-    iph->daddr = htonl(iph->daddr);
-    iph->len = htons(iph->len);
+    iph->saddr = stack::in::htonl(iph->saddr);
+    iph->daddr = stack::in::htonl(iph->daddr);
+    iph->len = stack::in::htons(iph->len);
 
     if (iph->ttl <= 1) {
         _ICMP()->send(std::move(pkb), TIME_EXCEEDED, 0x00);
@@ -158,10 +159,10 @@ void IP::send_out(pk_buff &&pkb, uint8_t *hwaddr) {
     auto eth = eth_hdr(pkb.data);
     auto iph = ip_hdr(eth);
 
-    iph->len = htons(iph->len);
-    iph->daddr = htonl(iph->daddr);
-    iph->saddr = htonl(iph->saddr);
-    iph->fragoff = htons(iph->fragoff);
+    iph->len = stack::in::htons(iph->len);
+    iph->daddr = stack::in::htonl(iph->daddr);
+    iph->saddr = stack::in::htonl(iph->saddr);
+    iph->fragoff = stack::in::htons(iph->fragoff);
 
     iph->cksum = IPUtils::checksum(iph, IP_HDR_SZ(iph));
     _ETH()->xmit(std::move(pkb), hwaddr, pkb.dev_hwaddr, pkb.len, ETH_P_IP);
@@ -177,7 +178,7 @@ void IP::check_opts(iphdr *iph) {
             case IPOptions::LSRR: {
                 uint8_t dst[4];
                 memcpy(dst, (options + i) + 3, 4);
-                
+
                 auto dst0 = std::bitset<8>(dst[0]).to_string();
                 auto dst1 = std::bitset<8>(dst[1]).to_string();
                 auto dst2 = std::bitset<8>(dst[2]).to_string();

@@ -8,14 +8,17 @@
 #include "utility/concurrent_queue.hpp"
 #include "stack/pk_buff.h"
 
-class PacketProcessor: public Observer<pk_buff&&> {
+class PacketProcessor : public Observer<pk_buff &&> {
 public:
     PacketProcessor();
+
     ~PacketProcessor();
+
     void update(pk_buff data) override;
-    
+
 private:
     void worker();
+
     std::thread m_thread;   /* Thread */
     std::mutex mutex;       /* Data mutex */
     bool stop;

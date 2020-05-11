@@ -1,6 +1,6 @@
-#include <netinet/in.h>
 #include <cstring>
 #include "ethernet.h"
+#include "in.hpp"
 #include "tap.h"
 
 
@@ -16,7 +16,7 @@ void ETH::xmit(pk_buff &&pkb,
                uint16_t type) {
 
     auto eth = eth_hdr(pkb.data);
-    eth->type = htons(type);
+    eth->type = stack::in::htons(type);
     memcpy(eth->dmac, dst_hwaddr, 6);
     memcpy(eth->smac, hwaddr, 6);
 

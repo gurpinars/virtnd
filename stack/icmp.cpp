@@ -1,7 +1,7 @@
 #include <iostream>
 #include <cstring>
-#include <netinet/in.h>
 #include "ip.h"
+#include "in.hpp"
 #include "icmp.h"
 #include "pk_buff.h"
 
@@ -78,9 +78,9 @@ void ICMP::send(pk_buff &&pkb, uint8_t type, uint8_t code) {
         memcpy(ptr + 4, iphdr, IP_HDR_SZ(iph));
         memcpy(ptr + 4 + IP_HDR_SZ(iph), f64, 8);
 
-        iph->saddr = ntohl(iph->saddr);
+        iph->saddr = stack::in::ntohl(iph->saddr);
         iph->daddr = pkb.dev_addr;
-        iph->len = ntohs(iph->len);
+        iph->len = stack::in::ntohs(iph->len);
     }
 
     int icmp_len = iph->len - MIN_IP_HDR_SZ;

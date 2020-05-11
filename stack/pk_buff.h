@@ -1,6 +1,7 @@
 #ifndef VIRTND_PK_BUFF_H
 #define VIRTND_PK_BUFF_H
 
+#include <sys/types.h>
 #include <cstring>
 #include "route.h"
 
@@ -8,7 +9,9 @@ static constexpr uint32_t MTU = 1500;
 
 typedef struct pk_buff_t {
     pk_buff_t() = default;
-    pk_buff_t(const pk_buff_t &other)= delete;
+
+    pk_buff_t(const pk_buff_t &other) = delete;
+
     pk_buff_t &operator=(const pk_buff_t &other) = delete;
 
     pk_buff_t(pk_buff_t &&other) noexcept {

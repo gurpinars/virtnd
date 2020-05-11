@@ -1,7 +1,7 @@
-#include <netinet/in.h>
 #include "packet_processor.h"
 #include "stack/ethernet.h"
 #include "stack/arp.h"
+#include "stack/in.hpp"
 #include "stack/ip.h"
 
 
@@ -29,9 +29,9 @@ void PacketProcessor::worker() {
         pkt_queue.wait_and_pop(pkb);
 
         auto *eth = eth_hdr(pkb.data);
-        eth->type = htons(eth->type);
+        uint16_t type = stack::in::ntohs(eth->type);
 
-        switch (eth->type) {
+        switch (type) {
             case ETH_P_ARP:
                 _ARP()->recv(std::move(pkb));
                 break;
