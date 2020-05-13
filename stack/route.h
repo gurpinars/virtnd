@@ -89,7 +89,7 @@ public:
 
     ROUTE &operator=(const ROUTE &) = delete;
 
-    rtentry &lookup(uint32_t);
+    rtentry lookup(uint32_t daddr);
 
 private:
     ROUTE();

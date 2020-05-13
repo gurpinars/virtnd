@@ -19,9 +19,9 @@ public:
 
     ICMP &operator=(const ICMP &) = delete;
 
-    static void recv(pk_buff &&);
+    static void recv(pk_buff &&pkb);
 
-    static void send(pk_buff &&, uint8_t, uint8_t);
+    static void send(pk_buff &&pkb, uint8_t type, uint8_t code);
 
 private:
     ICMP() = default;;
