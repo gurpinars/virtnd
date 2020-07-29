@@ -17,12 +17,12 @@ public:
 
     void insert(const _Key k, _Val &&v) {
         std::lock_guard<std::mutex> lockq{mtx};
-        container.insert(std::make_pair(k, std::move(v)));
+        container.insert(std::make_pair(k, std::forward<T>(v)));
     }
 
     void update(const _Key k, _Val &&v) {
         std::lock_guard<std::mutex> lockq{mtx};
-        container[k] = std::move(v);
+        container[k] = std::forward<T>(v);
     }
 
     void erase(const_iterator it) {
