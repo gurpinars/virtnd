@@ -7,9 +7,9 @@
 template<typename T>
 class concurrent_queue {
 public:
-    void push(T data) {
+    void push(T &&data) {
         std::unique_lock<std::mutex> lockq{mtx};
-        m_queue.push(std::move(data));
+        m_queue.push(std::forward<T>(data));
 
         lockq.unlock();
         cv.notify_one();
